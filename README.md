@@ -112,13 +112,68 @@ bats_load_library bats-mock
 ### `mock_create`
 
 ```bash
-mock_create
+mock_create [<command>]
 ```
 
 Creates a mock program with a unique name in `BATS_TEST_TMPDIR` and outputs its path.
+The mock tracks calls and collects their properties.
+The collected data is accessible using methods described below.
 
-The mock tracks calls and collects their properties. The collected
-data is accessible using methods described below.
+If `command` is provided a symbolic link with the given name is created and returned.
+
+> **NOTE**  
+> Combining `mock_command` and `path_prepend` may be used to supply custom executables for your tests.
+>
+> It is self-explanatory that this approach doesn't work for shell scripts with commands having hard-coded absolute paths.
+
+```bash
+setup() {
+  # Set the path to mocked binaries directory as the first location in PATH to
+  # lookup in mock directories first. This change lives only for the duration of
+  # the test and will be reset after. It does not modify the PATH outside of the
+  # running test.
+  PATH=$(path_prepend "${BATS_TEST_TMPDIR}")
+
+  # NOTE: no cleanup since all mocks are created in ${BATS_TEST_TMPDIR}
+}
+
+@test "mock call to wget" {
+  _=$(mock_create wget)
+
+  # Calls the mock instead of the system installed wget
+  wget
+  [[ $(mock_get_call_num "${mock}") -eq 1 ]]
+}
+```
+
+### `path_prepend`
+
+```bash
+path_prepend <mock | command | path_to_add> [path]
+```
+
+Outputs `$PATH` prefixed with the mocked command's directory.
+If the directory is already part of `$PATH` nothing is done.
+
+Works regardless if the provided mock is a file, link or a directory.
+
+Use `path` instead of `$PATH` if specified.
+
+### `path_rm`
+
+```bash
+path_rm <command | path_to_remove> [path]
+```
+
+Outputs `$PATH` with directories removed that contain the specified command or path.
+
+- If a command name is provided, all directories in which that command can be found are removed.
+- If an absolute path to the command is provided (e.g. `/usr/bin/ls`), only the directory containing that executable (e.g. `/usr/bin`) is removed.
+- If an absolute path is provided, the given path is removed.
+
+Use `path` instead of `$PATH` if specified.
+
+If a relative path is provided, the function exits with an error.
 
 > **NOTE**  
 > `mock_command` and `path_prepend` may be used to supply custom executables for your tests.
@@ -165,9 +220,8 @@ Sets the exit status of the mock.
 
 `0` status is set by default when mock is created.
 
-If `n` is specified the status will be returned on the `n`-th
-call. The call indexing starts with `1`. Multiple invocations can be
-used to mimic complex status sequences.
+If `n` is specified the status will be returned on the `n`-th call.
+The call indexing starts with `1`. Multiple invocations can be used to mimic complex status sequences.
 
 ### `mock_set_output`
 
@@ -175,15 +229,11 @@ used to mimic complex status sequences.
 mock_set_output <mock> (<output>|-) [<n>]
 ```
 
-Sets the output of the mock.
+Sets the output of the mock. The mock outputs nothing by default.
 
-The mock outputs nothing by default.
+If the output is specified as `-` then it is going to be read from `STDIN`.
 
-If the output is specified as `-` then it is going to be read from
-`STDIN`.
-
-The optional `n` argument behaves similarly to the one of
-`mock_set_exit_code`.
+The optional `n` argument behaves similarly to the one of `mock_set_exit_code`.
 
 ### `mock_set_side_effect`
 
@@ -196,11 +246,9 @@ sourced by the mock when it is called.
 
 No side effect is set by default.
 
-If the side effect is specified as `-` then it is going to be read
-from `STDIN`.
+If the side effect is specified as `-` then it is going to be read from `STDIN`.
 
-The optional `n` argument behaves similarly to the one of
-`mock_set_exit_code`.
+The optional `n` argument behaves similarly to the one of `mock_set_exit_code`.
 
 ### `mock_get_call_num`
 
@@ -227,8 +275,8 @@ It requires the mock to be called at least once.
 mock_get_call_args <mock> [<n>]
 ```
 
-Returns the arguments line the mock was called with the `n`-th
-time. If no `n` is specified then assuming the last call.
+Returns the arguments line the mock was called with the `n`-th time.
+If no `n` is specified then assuming the last call.
 
 It requires the mock to be called at least once.
 

@@ -65,3 +65,12 @@ load mock_test_suite
   [[ "${status}" -eq 0 ]]
   [[ "${output}" = '-n -e echo params' ]]
 }
+
+@test 'mock_get_call_args with mocked command' {
+  # shellcheck disable=SC2154
+  "${cmd}" one
+  "${cmd}" two
+  run mock_get_call_args "${cmd}"
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" = 'two' ]]
+}
