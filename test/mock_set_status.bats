@@ -38,3 +38,9 @@ load mock_test_suite
   run "${mock}"
   [[ "${status}" -eq 0 ]]
 }
+
+@test 'mock_set_status with mocked command' {
+  # shellcheck disable=SC2154
+  mock_set_status "${cmd}" 127
+  run -127 "${cmd}"
+}
