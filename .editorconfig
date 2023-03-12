@@ -33,3 +33,6 @@ trim_trailing_whitespace = false
 
 [test/fixtures/bats/*_no_shellcheck.bats]
 ignore = true
+
+[.local/**]
+ignore = true
