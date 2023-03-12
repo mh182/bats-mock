@@ -324,7 +324,7 @@ path_prepend() {
   fi
 }
 
-# Returns a path without a given path
+# Returns $PATH without the provided path
 # Arguments:
 #   1: Path to be removed
 #   2: Path from which the 1st argument is removed. Defaults to $PATH if not provided.
@@ -371,4 +371,40 @@ _remove_path() {
   path=${path#:}
   path=${path%:}
   echo "${path}"
+}
+
+# Returns a path to directory populated with symbolic links to basic commands
+# Globals:
+#   BATS_TEST_TMPDIR
+# Arguments:
+#   1: List of commands to be added to the directory, optional
+# Returns:
+#   1: If one of the commands provided in the argument can't be found
+# Outputs:
+#   STDOUT: Path to the directory
+#   STDERR: Corresponding error message
+mock_bin_dir() {
+  local commands=("$@")
+  local bin_dir=${BATS_TEST_TMPDIR}
+  local customized=true
+
+  if [[ ${#commands[@]} -eq 0 ]]; then
+    customized=false
+    commands=(awk basename bash cat chmod chown cp cut date env
+      dirname getopt grep head id find hostname ln ls mkdir
+      mktemp mv pidof readlink rm rmdir sed sh sleep sort
+      split tail tee tempfile touch tr tty uname uniq unlink
+      wc which xargs)
+  fi
+  for c in "${commands[@]}"; do
+    if target=$(command -v "$c" 2>&1); then
+      # Use 'command -p' to assure ln is found, since '/bin' or '/usr/bin' may be not in $PATH anymore.
+      if ! error_msg=$(command -p ln -s "${target}" "${bin_dir}/${c}" 2>&1) && ${customized}; then
+        echo "${error_msg}" && exit 1
+      fi
+    elif ${customized}; then
+      echo "$c: command not found" && exit 1
+    fi
+  done
+  echo "${bin_dir}"
 }

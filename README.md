@@ -34,6 +34,7 @@ For changes and version history see [CHANGELOG](CHANGELOG.md).
   - Mock customization [`mock_set_status`](#mock_set_status), [`mock_set_output`](#mock_set_output) and [`mock_set_side_effect`](#mock_set_side_effect)
   - Mock observation [`mock_get_call_num`](#mock_get_call_num), [`mock_get_call_user`](#mock_get_call_user), [`mock_get_call_args`](#mock_get_call_args), [`mock_get_call_env`](#mock_get_call_env)
   - Path utilities [`path_prepend`](#path_prepend), [`path_rm`](#path_rm)
+  - Mock environment [`mock_bin_dir`](#mock_bin_dir)
 - [Contributing](#contributing)
 - [About this fork](#about-this-fork)
 
@@ -104,6 +105,27 @@ bats_load_library bats-mock
   ${mock}
 
   [[ $(mock_get_call_num "${mock}") -eq 1 ]]
+}
+```
+
+`mock_bin_dir` with `path_rm` and `path_prepend` may be used in tests to mock a pristine system.
+
+```bash
+load bats-mock
+
+@test "no HTTP download program installed shows error message" {
+  # Mock a system where neither curl, wget, nor fetch is installed
+  mock_pristine_system=$(mock_bin_dir)
+
+  # Create a PATH so that system installed commands are not found
+  path=$(path_prepend "${mock_pristine_system}" $(path_rm /bin $(path_rm /usr/bin)))
+
+  # Execute the shell script under test
+  # Provide the created PATH so we mock a pristine system with no download commands installed
+  PATH="${path}" run install-fancy-app.sh
+
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "Error: couldn't find HTTP download program"]]
 }
 ```
 
@@ -255,6 +277,15 @@ Returns the value of the environment variable the mock was called with
 the `n`-th time. If no `n` is specified then assuming the last call.
 
 It requires the mock to be called at least once.
+
+### `mock_bin_dir`
+
+mock_bin_dir [cmd...]
+
+Creates a directory containing the most basic commands found on a system and outputs its path.
+The commands are symbolic links to the system provided programs.
+A list of space separated commands may be provided to define a more strict set of commands.
+`mock_create <command>` puts the mocked command in the same directory as provided with `mock_bin_dir`.
 
 ## Contributing
 

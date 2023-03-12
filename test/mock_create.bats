@@ -72,6 +72,17 @@ load '../load'
   [[ "$(dirname "$(readlink "${output}")")" = "${BATS_TEST_TMPDIR}" ]]
 }
 
+@test 'mock_create command overwrites existing link in mock_bin_dir' {
+  run mock_bin_dir
+  [[ "${status}" -eq 0 ]]
+  run mock_create cat
+  [[ "${status}" -eq 0 ]]
+  run readlink "${output}"
+  [[ "${output}" =~ ${BATS_TEST_TMPDIR}/bats-mock\. ]]
+}
+
+# Error cases
+
 @test 'mock_create command twice with same command fails' {
   run mock_create example
   [[ "${status}" -eq 0 ]]
