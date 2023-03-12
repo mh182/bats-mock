@@ -249,3 +249,52 @@ path_prepend() {
     echo "${mock_path}:${path}"
   fi
 }
+
+# Returns a path without a given path
+# Arguments:
+#   1: Path to be removed
+#   2: Path from which the 1st argument is removed. Defaults to $PATH if not provided.
+# Outputs:
+#   STDOUT: a path without the path provided in ${1}
+path_rm() {
+  local path_or_cmd_to_remove=${1?'Path or command to remove must be specified'}
+  local path=${2:-${PATH}}
+  if [[ "${path_or_cmd_to_remove}" != /* ]] && [[ "${path_or_cmd_to_remove}" == *"/"* ]]; then
+    echo "Relative paths are not allowed"
+    return 1
+  fi
+
+  if [[ "${path_or_cmd_to_remove}" == /* ]]; then
+    # Absolute path to a command or directory, remove the directory and exit
+    _remove_path "${path_or_cmd_to_remove}"
+    return
+  fi
+
+  # It's a command, resolve its path(s) and remove their directories from the path
+  local path_to_remove="${path_or_cmd_to_remove}"
+  local path_to_cmd
+
+  while path_to_cmd=$(PATH=${path} command -v "${path_or_cmd_to_remove}"); do
+    # We can resolved the command
+    # Use parameter expansion to get the folder portion of the command
+    path_to_remove=${path_to_cmd%/*}
+    path=$(_remove_path "${path_to_remove}")
+  done
+  echo "${path}"
+}
+
+_remove_path() {
+  local path_to_remove="${1?'Path to remove must be specified'}"
+  # Wrap the path with colons to simplify removal
+  path=":$path:"
+  # Replace single colons with double colons for easier string substitution
+  path=${path//":"/"::"}
+  # Remove the path
+  path=${path//":${path_to_remove}:"/}
+  # Restore single colons
+  path=${path//"::"/":"}
+  # Clean up leading/trailing colons
+  path=${path#:}
+  path=${path%:}
+  echo "${path}"
+}

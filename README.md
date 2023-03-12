@@ -33,7 +33,7 @@ For changes and version history see [CHANGELOG](CHANGELOG.md).
   - Mock generation [`mock_create`](#mock_create)
   - Mock customization [`mock_set_status`](#mock_set_status), [`mock_set_output`](#mock_set_output) and [`mock_set_side_effect`](#mock_set_side_effect)
   - Mock observation [`mock_get_call_num`](#mock_get_call_num), [`mock_get_call_user`](#mock_get_call_user), [`mock_get_call_args`](#mock_get_call_args), [`mock_get_call_env`](#mock_get_call_env)
-  - Path utilities [`path_prepend`](#path_prepend)
+  - Path utilities [`path_prepend`](#path_prepend), [`path_rm`](#path_rm)
 - [Contributing](#contributing)
 - [About this fork](#about-this-fork)
 
@@ -138,6 +138,22 @@ If the directory is already part of `$PATH` nothing is done.
 Works regardless if the provided mock is a file, link or a directory.
 
 Use `path` instead of `$PATH` if specified.
+
+### `path_rm`
+
+```bash
+path_rm <command | path_to_remove> [path]
+```
+
+Outputs `$PATH` with directories removed that contain the specified command or path.
+
+- If a command name is provided, all directories in which that command can be found are removed.
+- If an absolute path to the command is provided (e.g. `/usr/bin/ls`), only the directory containing that executable (e.g. `/usr/bin`) is removed.
+- If an absolute path is provided, the given path is removed.
+
+Use `path` instead of `$PATH` if specified.
+
+If a relative path is provided, the function exits with an error.
 
 ### `mock_set_status`
 
