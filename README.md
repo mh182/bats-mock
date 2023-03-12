@@ -33,6 +33,7 @@ For changes and version history see [CHANGELOG](CHANGELOG.md).
   - Mock generation [`mock_create`](#mock_create)
   - Mock customization [`mock_set_status`](#mock_set_status), [`mock_set_output`](#mock_set_output) and [`mock_set_side_effect`](#mock_set_side_effect)
   - Mock observation [`mock_get_call_num`](#mock_get_call_num), [`mock_get_call_user`](#mock_get_call_user), [`mock_get_call_args`](#mock_get_call_args), [`mock_get_call_env`](#mock_get_call_env)
+  - Path utilities [`path_prepend`](#path_prepend)
 - [Contributing](#contributing)
 - [About this fork](#about-this-fork)
 
@@ -114,11 +115,29 @@ bats_load_library bats-mock
 mock_create
 ```
 
-Creates a mock program with a unique name in `BATS_TMPDIR` and outputs
-its path.
+Creates a mock program with a unique name in `BATS_TEST_TMPDIR` and outputs its path.
 
 The mock tracks calls and collects their properties. The collected
 data is accessible using methods described below.
+
+> **NOTE**  
+> `mock_command` and `path_prepend` may be used to supply custom executables for your tests.
+>
+> It is self-explanatory that this approach doesn't work for shell scripts with
+> commands having hard-coded absolute paths.
+
+### `path_prepend`
+
+```bash
+path_prepend <mock | command | path_to_add> [path]
+```
+
+Outputs `$PATH` prefixed with the mocked command's directory.
+If the directory is already part of `$PATH` nothing is done.
+
+Works regardless if the provided mock is a file, link or a directory.
+
+Use `path` instead of `$PATH` if specified.
 
 ### `mock_set_status`
 
