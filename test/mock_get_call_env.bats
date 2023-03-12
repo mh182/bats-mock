@@ -17,7 +17,6 @@ load mock_test_suite
 
 @test 'mock_get_call_env requires the mock to be called' {
   run mock_get_call_env "${mock}" 'VAR'
-  echo "${output}" >&2
   [[ "${status}" -eq 1 ]]
   [[ "${output}" =~ Mock\ must\ be\ called\ at\ least\ 1\ time\(s\) ]]
 }
@@ -26,7 +25,6 @@ load mock_test_suite
   VAR='value 1' "${mock}"
   VAR='value 2' "${mock}"
   run mock_get_call_env "${mock}" 'VAR'
-  echo "${output}" >&2
   [[ "${status}" -eq 0 ]]
   [[ "${output}" = 'value 2' ]]
 }

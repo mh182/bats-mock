@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-load ../src/bats-mock
+# Load bats-mock library
+load '../load'
 
 @test 'mock_create creates a program' {
   run mock_create
