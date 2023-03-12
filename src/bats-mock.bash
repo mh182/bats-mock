@@ -219,3 +219,33 @@ mock_default_n() {
 
   echo "${n}"
 }
+
+# Returns a path prepended with the mock's directory
+# Arguments:
+#   1: Path to the mock which may be a file, directory or link
+#   2: Path to be prepended by the path from the 1st argument. Defaults to $PATH if not provided.
+# Outputs:
+#   STDOUT: the path prepended with the mock's directory
+path_prepend() {
+  local mock="${1?'Mock must be specified'}"
+  local path=${2:-${PATH}}
+  local mock_path="${mock}"
+
+  if [[ "${mock}" != /* ]]; then
+    echo "Relative paths are not allowed"
+    return 1
+  fi
+
+  if [[ -f "${mock}" ]]; then
+    # Parameter expansion to get the folder portion of the mock's path
+    local mock_path="${mock%/*}"
+  fi
+
+  # Putting the directory with the mocked comands at the beginning of the PATH
+  # so it gets picked up first
+  if [[ :${path}: == *:${mock_path}:* ]]; then
+    echo "${path}"
+  else
+    echo "${mock_path}:${path}"
+  fi
+}
