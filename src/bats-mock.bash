@@ -9,7 +9,7 @@
 #   1: Command to mock, optional
 # Returns:
 #   1: If the mock command already exists
-#   1: If the command provided with an absoluth path already exists
+#   1: If the command provided with an absolute path already exists
 # Outputs:
 #   STDOUT: Path to the mock
 #   STDERR: Corresponding error message
@@ -318,7 +318,7 @@ path_rm() {
   echo "${path}"
 }
 
-# Returns a path to directory populated with symolic links to basic commands
+# Returns a path to directory populated with symbolic links to basic commands
 # Globals:
 #   BATS_TMPDIR
 # Arguments:

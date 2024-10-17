@@ -51,14 +51,15 @@ teardown() {
 }
 
 @test 'mock_create command with absolute path' {
-  absolute_path=$(mktemp -u "${BATS_TMPDIR}/bats-mock.$$.XXXX")
+  echo "${BATS_TMPDIR}/bats-mock.$$.XXXX"
+  absolute_path=$(mktemp -u "${BATS_TMPDIR}/bats-mock.$$.XXXXXX")
   run mock_create "${absolute_path}/example"
   [[ "${status}" -eq 0 ]]
   [[ "${output}" = "${absolute_path}/example" ]]
 }
 
 @test 'mock_create command with absolute path creates mock in BATS_TMPDIR' {
-  absolute_path=$(mktemp -u "${BATS_TMPDIR}/bats-mock.$$.XXXX")
+  absolute_path=$(mktemp -u "${BATS_TMPDIR}/bats-mock.$$.XXXXXX")
   run mock_create "${absolute_path}/example"
   [[ "${status}" -eq 0 ]]
   [[ "${output}" = "${absolute_path}/example" ]]
@@ -78,17 +79,24 @@ teardown() {
   LC_ALL=C run mock_create example
   echo "output: $output"
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "ln: failed to create symbolic link '${BATS_TMPDIR}/bats-mock.$$.bin/example': File exists" ]]
+  local regex_pattern="ln: .*${BATS_TMPDIR}/bats-mock.$$.bin/example'*: File exists"
+  echo "regex match: [${regex_pattern}]"
+  [[ "${output}" =~ ${regex_pattern} ]]
 }
 
 @test 'mock_create command with absolute path to existing command fails' {
-  LC_ALL=C run mock_create /usr/bin/ls
+  LC_ALL=C run mock_create /bin/ls
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ "ln: failed to create symbolic link '/usr/bin/ls': File exists" ]]
+  echo "Output: [${output}]"
+  # This is a brittle test since we check against ln error output which may
+  # varry based on the implementation. Is there a better way?
+  local regex_pattern="ln: .*/bin/ls'*: File exists"
+  echo "regex_pattern: [${regex_pattern}]"
+  [[ "${output}" =~ ${regex_pattern} ]]
 }
 
 @test 'mock_create comand to existing program does not create the mock' {
-  LC_ALL=C run mock_create /usr/bin/ls
+  LC_ALL=C run mock_create /bin/ls
   [[ "${status}" -eq 1 ]]
   [[ $(find "${BATS_TMPDIR}" -maxdepth 1 -name "bats-mock.$$.*" 2>&1 | wc -l) -eq 0 ]]
 }

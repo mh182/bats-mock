@@ -77,5 +77,9 @@ teardown() {
   LC_ALL=C run mock_chroot ls cat head
   [[ "${status}" -eq 1 ]]
   echo "Output: [${output}]"
-  [[ "${output}" == "ln: failed to create symbolic link '${BATS_TMPDIR}/bats-mock.$$.bin/cat': File exists" ]]
+  # This is a brittle test since we check against ln error output which may
+  # varry based on the implementation. Is there a better way?
+  local regex_pattern="ln: .*${BATS_TMPDIR}/bats-mock.$$.bin/cat'*: File exists"
+  echo "regex_pattern: [${regex_pattern}]"
+  [[ "${output}" =~ ${regex_pattern} ]]
 }
