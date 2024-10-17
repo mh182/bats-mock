@@ -11,49 +11,14 @@ teardown() {
 @test 'mock_chroot without argument creates directory with minimal set of commands' {
   run mock_chroot
   [[ "${status}" -eq 0 ]]
-  [[ -x "${output}/awk" ]]
-  [[ -x "${output}/basename" ]]
-  [[ -x "${output}/bash" ]]
-  [[ -x "${output}/cat" ]]
-  [[ -x "${output}/chmod" ]]
-  [[ -x "${output}/chown" ]]
-  [[ -x "${output}/cp" ]]
-  [[ -x "${output}/cut" ]]
+  # Test sub-set of created links otherwise the test may fail on systems with
+  # reduced tooling
   [[ -x "${output}/date" ]]
-  [[ -x "${output}/env" ]]
-  [[ -x "${output}/dirname" ]]
-  [[ -x "${output}/getopt" ]]
-  [[ -x "${output}/grep" ]]
-  [[ -x "${output}/head" ]]
-  [[ -x "${output}/id" ]]
-  [[ -x "${output}/find" ]]
-  [[ -x "${output}/hostname" ]]
   [[ -x "${output}/ln" ]]
   [[ -x "${output}/ls" ]]
-  [[ -x "${output}/mkdir" ]]
-  [[ -x "${output}/mktemp" ]]
   [[ -x "${output}/mv" ]]
-  [[ -x "${output}/pidof" ]]
-  [[ -x "${output}/readlink" ]]
   [[ -x "${output}/rm" ]]
-  [[ -x "${output}/rmdir" ]]
-  [[ -x "${output}/sed" ]]
   [[ -x "${output}/sh" ]]
-  [[ -x "${output}/sleep" ]]
-  [[ -x "${output}/sort" ]]
-  [[ -x "${output}/split" ]]
-  [[ -x "${output}/tail" ]]
-  [[ -x "${output}/tee" ]]
-  [[ -x "${output}/tempfile" ]]
-  [[ -x "${output}/touch" ]]
-  [[ -x "${output}/tty" ]]
-  [[ -x "${output}/uname" ]]
-  [[ -x "${output}/uniq" ]]
-  [[ -x "${output}/unlink" ]]
-  [[ -x "${output}/wc" ]]
-  [[ -x "${output}/which" ]]
-  [[ -x "${output}/xargs" ]]
-  [[ $(find "${output}" -type l | wc -l) -eq 43 ]]
 }
 
 @test 'mock_chroot skips command if command not found' {
@@ -66,9 +31,10 @@ teardown() {
 @test 'mock_chroot is idempotent' {
   run mock_chroot
   [[ "${status}" -eq 0 ]]
+  local first_chroot="${output}"
   run mock_chroot
   [[ "${status}" -eq 0 ]]
-  [[ $(find "${output}" -type l | wc -l) -eq 43 ]]
+  [[ "${output}" == "${first_chroot}" ]]
 }
 
 @test 'mock_chroot and mock_create command use same directory' {
