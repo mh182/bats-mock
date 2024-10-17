@@ -212,6 +212,8 @@ mock_get_call_env() {
   local n
   n="$(mock_default_n "${mock}" "${3-}")" || exit "$?"
 
+  # Dynamic dispatching: this can be found by shellcheck
+  # shellcheck disable=SC1090
   source "${mock}.env.${n}"
   echo "${!var-}"
 }
