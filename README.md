@@ -1,10 +1,15 @@
 # bats-mock
 
-> NOTE: 
+> NOTE:
 >
 > This is a temporary fork of https://github.com/grayhemp/bats-mock and will be removed in case the changes are merged.
 
-[![Build Status](https://travis-ci.org/grayhemp/bats-mock.svg?branch=master)](https://travis-ci.org/grayhemp/bats-mock)
+This fork includes improvements in the following areas:
+
+- Minor bug fixes
+- `mock_create`: added optional `command` argument
+- New helper functions: `path_override`, `path_rm`, `mock_chroot`, `mock_teardown`
+- Add `Dockerfile` to create a bats container image including `bats-mock`
 
 A [Bats][bats-core] helper library providing mocking functionality.
 
