@@ -95,6 +95,22 @@ If you use the `git submodule` setup as described in the [bats-core quick instal
 git submodule add https://github.com/mh182/bats-mock.git test/test_helper/bats-mock
 ```
 
+As an alternative you may run `bats` in a container image including the `bats-mock` helper library.
+Check out a copy of this repository, then build a container image.
+
+```bash
+$ git clone https://github.com/mh182/bats-mock.git
+$ cd bats-mock
+$ docker build --tag bats-mock:latest .
+```
+
+To run a test suite from a directory called `test` in the current directory of your local machine,
+mount in a volume and direct bats to its path inside the container:
+
+```bash
+$ docker run -it -v "${PWD}:/code" bats-mock:latest test
+```
+
 ## Usage
 
 ### `mock_create`
