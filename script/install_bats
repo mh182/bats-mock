@@ -4,8 +4,8 @@
 
 set -e -o pipefail
 
-: ${BATS_VERSION:='1.2.1'}
-: ${BATS_SHA1SUM:='418ca60af55c339ac7911c74a44f7edf41e3a17c'}
+: ${BATS_VERSION:='1.12.0'}
+: ${BATS_SHA1SUM:='2d2622dcaabe5842d9b4bb693a2d781c288d406f'}
 : ${PREFIX:=/usr/local}
 : ${SRCDIR:="${PREFIX}/src"}
 
@@ -31,7 +31,7 @@ fi
 mkdir -p "${SRCDIR}"
 cd "${SRCDIR}"
 wget -nv "https://github.com/bats-core/bats-core/archive/v${BATS_VERSION}.tar.gz"
-${sha1_prog} <<< "${BATS_SHA1SUM}  v${BATS_VERSION}.tar.gz"
+${sha1_prog} <<<"${BATS_SHA1SUM}  v${BATS_VERSION}.tar.gz"
 tar -xf "v${BATS_VERSION}.tar.gz"
 rm "v${BATS_VERSION}.tar.gz"
 cd "bats-core-${BATS_VERSION}"
