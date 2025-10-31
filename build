@@ -30,6 +30,60 @@ command_test() {
   bats -t test/"$([[ -n "$1" ]] && echo "$1.bats")"
 }
 
+command_check() {
+  local do_style_check=true
+  local do_static_analysis=true
+  local status=0
+
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --style-only) do_static_analysis=false ;;
+    --analyis-only) do_style_check=false ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      return 2
+      ;;
+    *) break ;;
+    esac
+    shift
+  done
+
+  if "$do_style_check"; then
+    run_check_tool shfmt --diff . || status=$?
+  fi
+
+  if "$do_static_analysis"; then
+    run_check_tool shellcheck src/*.bash test/*.bats || status=$?
+  fi
+
+  return "$status"
+}
+
+run_check_tool() {
+  local tool="$1"
+  shift
+
+  # ANSI colors (fall back to plain if not a terminal)
+  local green="" red="" reset=""
+  if [[ -t 1 ]]; then
+    green='\033[0;32m'
+    red='\033[0;31m'
+    reset='\033[0m'
+  fi
+
+  echo "Running ${tool}..."
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo -e "${red}❌ ${tool} is not installed.${reset}"
+    return 2
+  elif ! ${tool} "$@"; then
+    echo -e "${red}❌ ${tool} check failed.${reset}"
+    return 1
+  else
+    echo -e "${green}✅ ${tool} check passed.${reset}"
+  fi
+}
+
 main() {
   if [[ "${PREFIX:0:1}" != '/' ]]; then
     echo "$(basename "$0"): PREFIX must be an absolute path" >&2

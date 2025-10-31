@@ -143,11 +143,14 @@ As an alternative use `script/install_bats install` which will install `bats-cor
 # Run tests
 ./build test
 
-# Check formatting
-shftm -i 2 --diff .
+# Check style guide and static code analyis
+./build check
 
-# Perform static code analyis
-shellcheck -x src/bats-mock.bash test/*.bats
+# Check only style guide
+./build check --style-only
+
+# Check only static code analysi
+./build check --analyis-only
 ```
 
 Alternatively you may use the official Bats docker image to run the tests in isolation.
