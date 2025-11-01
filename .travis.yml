@@ -1,9 +1,0 @@
-language: bash
-env:
-  - PREFIX="${HOME}/.local"
-before_install:
-  - ./script/install_bats
-install:
-  - ./build install
-script:
-  - ./build test
