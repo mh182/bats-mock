@@ -9,6 +9,7 @@ load mock_test_suite
 }
 
 @test 'mock_set_output requires output to be specified' {
+  # shellcheck disable=SC2154
   run mock_set_output "${mock}"
   [[ "${status}" -eq 1 ]]
   [[ "${output}" =~ 'Output must be specified' ]]

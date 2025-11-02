@@ -9,6 +9,7 @@ load mock_test_suite
 }
 
 @test 'mock_get_call_num outputs the number of calls' {
+  # shellcheck disable=SC2154
   run mock_get_call_num "${mock}"
   [[ "${status}" -eq 0 ]]
   [[ "${output}" -eq 0 ]]

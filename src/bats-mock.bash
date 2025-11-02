@@ -151,6 +151,7 @@ mock_get_call_env() {
   local n
   n="$(mock_default_n "${mock}" "${3-}")" || exit "$?"
 
+  # shellcheck source=/dev/null
   source "${mock}.env.${n}"
   echo "${!var-}"
 }

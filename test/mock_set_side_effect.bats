@@ -9,6 +9,7 @@ load mock_test_suite
 }
 
 @test 'mock_set_side_effect requires side_effect to be specified' {
+  # shellcheck disable=SC2154
   run mock_set_side_effect "${mock}"
   [[ "${status}" -eq 1 ]]
   [[ "${output}" =~ 'Side effect must be specified' ]]
