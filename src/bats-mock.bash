@@ -9,17 +9,17 @@
 #   STDOUT: Path to the mock
 mock_create() {
   local index
-  index="$(find ${BATS_TMPDIR} -name bats-mock.$$.* 2>&1 | \
-           grep -v 'Permission denied' | wc -l | tr -d ' ')"
+  index="$(find ${BATS_TMPDIR} -name bats-mock.$$.* 2>&1 |
+    grep -v 'Permission denied' | wc -l | tr -d ' ')"
   local mock
   mock="${BATS_TMPDIR}/bats-mock.$$.${index}"
 
-  echo -n 0 > "${mock}.call_num"
-  echo -n 0 > "${mock}.status"
-  echo -n '' > "${mock}.output"
-  echo -n '' > "${mock}.side_effect"
+  echo -n 0 >"${mock}.call_num"
+  echo -n 0 >"${mock}.status"
+  echo -n '' >"${mock}.output"
+  echo -n '' >"${mock}.side_effect"
 
-  cat <<EOF > "${mock}"
+  cat <<EOF >"${mock}"
 #!/usr/bin/env bash
 
 set -e
@@ -174,9 +174,9 @@ mock_set_property() {
   fi
 
   if [[ -n "${n}" ]]; then
-    echo -e "${property_value}" > "${mock}.${property_name}.${n}"
+    echo -e "${property_value}" >"${mock}.${property_name}.${n}"
   else
-    echo -e "${property_value}" > "${mock}.${property_name}"
+    echo -e "${property_value}" >"${mock}.${property_name}"
   fi
 }
 

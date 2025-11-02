@@ -32,7 +32,7 @@ load mock_test_suite
 }
 
 @test 'mock_set_output sets an output from STDIN if - is specified' {
-  mock_set_output "${mock}" - <<< 'stdin output 1'
+  mock_set_output "${mock}" - <<<'stdin output 1'
   run "${mock}"
   [[ "${output}" = 'stdin output 1' ]]
 }

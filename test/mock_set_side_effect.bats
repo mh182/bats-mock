@@ -27,7 +27,7 @@ load mock_test_suite
 }
 
 @test 'mock_set_side_effect sets an side_effect from STDIN if - is specified' {
-  mock_set_side_effect "${mock}" - <<< "touch ${mock}.stdin_side_effect_1"
+  mock_set_side_effect "${mock}" - <<<"touch ${mock}.stdin_side_effect_1"
   run "${mock}"
   [[ -e "${mock}.stdin_side_effect_1" ]]
 }
