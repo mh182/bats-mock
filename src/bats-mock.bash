@@ -9,10 +9,10 @@
 #   STDOUT: Path to the mock
 mock_create() {
   local index
-  index="$(find "${BATS_TMPDIR}" -name "bats-mock.$$.*" 2>&1 |
-    grep -v 'Permission denied' | wc -l | tr -d ' ')"
   local mock
-  mock="${BATS_TMPDIR}/bats-mock.$$.${index}"
+  mock="${BATS_TMPDIR}/bats-mock.$$"
+  index="$(find "${BATS_TMPDIR}" -regex "${mock}\.[0-9]*" 2>/dev/null | wc -l | tr -d ' ')"
+  mock="${mock}.${index}"
 
   echo -n 0 >"${mock}.call_num"
   echo -n 0 >"${mock}.status"
