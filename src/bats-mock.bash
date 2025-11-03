@@ -2,17 +2,29 @@
 #
 # A Bats helper library providing mocking functionality
 
+# Assure test isolation by using BATS_TEST_TMPDIR introduced with bats 1.4.0
+bats_require_minimum_version '1.4.0'
+
 # Creates a mock program
 # Globals:
-#   BATS_TMPDIR
+#   BATS_TEST_TMPDIR
 # Outputs:
 #   STDOUT: Path to the mock
 mock_create() {
   local index
   local mock
-  mock="${BATS_TMPDIR}/bats-mock.$$"
-  index="$(find "${BATS_TMPDIR}" -regex "${mock}\.[0-9]*" 2>/dev/null | wc -l | tr -d ' ')"
-  mock="${mock}.${index}"
+  local prefix='bats-mock'
+
+  # Find the next available index. Use sort+tail instead of wc -l to avoid name
+  # collisions in case a mock is deleted in the test.
+  index="$(find "${BATS_TEST_TMPDIR}" -maxdepth 1 -type f -name "${prefix}.*" \
+    2>/dev/null | sed -E "s|.*/${prefix}\.([0-9]+)$|\1|" | sort -n | tail -n1)"
+  if [[ -z "${index}" ]]; then
+    index=0
+  else
+    ((index++))
+  fi
+  mock="${BATS_TEST_TMPDIR}/${prefix}.${index}"
 
   echo -n 0 >"${mock}.call_num"
   echo -n 0 >"${mock}.status"
