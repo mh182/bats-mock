@@ -362,7 +362,7 @@ Rules for creating a great commit message:
 
 ## Attribution
 
-This guide is based on the [contributing.md](https://contributing.md/generator)!
+This guide is based on the [contributing.md](https://contributing.md/generator/)!
 
 <!-- Links -->
 
