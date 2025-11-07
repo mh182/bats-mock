@@ -60,7 +60,7 @@ jobs:
         run: |
           echo "Running Bats tests..."
           bats --version
-          bats test
+          bats test --print-output-on-failure
       - name: 🐞 Start tmate session (manual trigger only)
         if: |
           github.event_name == 'workflow_dispatch' &&
