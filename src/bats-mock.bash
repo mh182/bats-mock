@@ -90,24 +90,46 @@ EOF
 }
 
 # Creates a symbolic link with given name to a mock program
+#
+# This method is not meant to be called directly. Use mock_create instead.
+#
 # Arguments:
 #   1: Path to the mock
 #   2: Command name
+# Returns:
+#   1: If the mock command already exists
+#   1: If the command provided with an absoluth path already exists
 # Outputs:
 #   STDOUT: Path to the mocked command
+#   STDERR: Corresponding error message
 mock_set_command() {
   local mock="${1?'Mocked command must be specified'}"
   local cmd="${2?'Command must be specified'}"
+  local link_name="${mock%/*}/${cmd}"
 
   if [[ "${cmd}" = /* ]]; then
-    # Command provided with an absolute path. Assure the folder exists.
-    mkdir -p "$(dirname "${cmd}")"
-  else
-    cmd="${mock%/*}/${cmd}"
+    # Command with abolute path
+    if [[ -e "${cmd}" ]]; then
+      echo "mock_create: failed to create command '${cmd}': command exists" >&2
+      exit 1
+    fi
+    link_name=${cmd}
+    mkdir -p "$(dirname "${link_name}")"
+  elif [[ -e "${link_name}" ]]; then
+    # Link already exists: either created by mock_create or mock_bin_dir
+    if [[ $(readlink "${link_name}") =~ ${BATS_TEST_TMPDIR} ]]; then
+      # Link pointing to  mock (created by mock_create)
+      echo "mock_create: failed to create command '${cmd}': command exists" >&2
+      exit 1
+    else
+      # Link pointing to outside $BATS_TEST_TMPDIR (created by mock_bin_dir).
+      # We can savely delete it, to create a new one.
+      rm "${link_name}"
+    fi
   fi
 
   # Create command stub by linking it to the mock
-  ln -s "${mock}" "${cmd}" && echo "${cmd}"
+  ln -s "${mock}" "${link_name}" && echo "${link_name}"
 }
 
 # Sets the exit status of the mock
@@ -285,7 +307,7 @@ path_prepend() {
 
   if [[ "${mock}" != /* ]]; then
     echo "Relative paths are not allowed"
-    return 1
+    exit 1
   fi
 
   if [[ -f "${mock}" ]]; then
@@ -313,7 +335,7 @@ path_rm() {
   local path=${2:-${PATH}}
   if [[ "${path_or_cmd_to_remove}" != /* ]] && [[ "${path_or_cmd_to_remove}" == *"/"* ]]; then
     echo "Relative paths are not allowed"
-    return 1
+    exit 1
   fi
 
   if [[ "${path_or_cmd_to_remove}" == /* ]]; then
@@ -338,7 +360,7 @@ path_rm() {
 _remove_path() {
   local path_to_remove="${1?'Path to remove must be specified'}"
   # Wrap the path with colons to simplify removal
-  path=":$path:"
+  local path=":$path:"
   # Replace single colons with double colons for easier string substitution
   path=${path//":"/"::"}
   # Remove the path
