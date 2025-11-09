@@ -2,25 +2,10 @@ name: Tests
 
 on:
   push:
-    branches: [main, ci-dev]
+    branches: [main]
   pull_request:
     branches: [main, "feature/**"]
   workflow_dispatch:
-    inputs:
-      debug_enabled:
-        type: boolean
-        description: "Run the build wit tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)"
-        required: false
-        default: false
-      debug_os:
-        type: choice
-        description: "Select OS where tmate debug session should run"
-        required: false
-        default: ubuntu-24.04
-        options:
-          - ubuntu-24.04
-          - macos-14
-          - macos-15
 
 jobs:
   # -------------------------------------------------------
@@ -54,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # os: tests on ubuntu-22.04 fail since bats is too old
+        # Tests on ubuntu-22.04 fail since bats is too old
         os: [ubuntu-24.04, macos-14, macos-15]
 
     steps:

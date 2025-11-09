@@ -1,0 +1,47 @@
+name: Debug Session
+
+on:
+  workflow_dispatch:
+    inputs:
+      debug_os:
+        type: choice
+        description: "Select OS where tmate debug session should run"
+        required: false
+        default: ubuntu-24.04
+        options:
+          - ubuntu-24.04
+          - macos-14
+          - macos-15
+
+jobs:
+  # -------------------------------------------------------
+  # Setup interactive debug session with tmate
+  # -------------------------------------------------------
+  debug:
+    name: Debug on ${{ github.event.inputs.debug_os }}
+    runs-on: ${{ github.event.inputs.debug_os }}
+
+    steps:
+      - name: 🛎️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐞 Setup interactive tmate session (detached)
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+
+      - name: 🧰 Install dependencies
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update -y
+            sudo apt-get install -y bats
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            brew update
+            brew install bats-core
+          fi
+
+      - name: 🧪 Run Bats tests
+        run: |
+          echo "Running Bats tests..."
+          bats --version
+          bats test
