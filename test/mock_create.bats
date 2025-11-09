@@ -45,7 +45,7 @@ load '../load'
   [[ "$(basename "${output}")" = example ]]
 }
 
-@test 'mock_create command is loacted in BATS_TEST_TMPDIR' {
+@test 'mock_create command is located in BATS_TEST_TMPDIR' {
   run mock_create example
   [[ "${status}" -eq 0 ]]
   echo "output: $output"
@@ -78,14 +78,14 @@ load '../load'
   # Set locale to C to get consistent error message
   LC_ALL=C run mock_create example
   [[ "${status}" -eq 1 ]]
-  local regexp="ln: .*${BATS_TEST_TMPDIR}/example'*: File exists"
+  local regexp="mock_create: failed to create command 'example': command exists"
   [[ "${output}" =~ ${regexp} ]]
 }
 
 @test 'mock_create command with absolute path to existing command fails' {
   LC_ALL=C run mock_create /bin/ls
   [[ "${status}" -eq 1 ]]
-  local regexp="ln: .*bin/ls'*: File exists"
+  local regexp="mock_create: failed to create command '/bin/ls': command exists"
   [[ "${output}" =~ ${regexp} ]]
 }
 
