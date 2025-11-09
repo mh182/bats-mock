@@ -48,6 +48,7 @@ load '../load'
 @test 'mock_create command is loacted in BATS_TEST_TMPDIR' {
   run mock_create example
   [[ "${status}" -eq 0 ]]
+  echo "output: $output"
   [[ "$(dirname "${output}")" == "${BATS_TEST_TMPDIR}" ]]
 }
 
