@@ -1,1 +1,4 @@
+# Ignore Jujutsu repository
+.jj
 .local
+.lycheecache

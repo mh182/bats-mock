@@ -7,6 +7,9 @@ on:
     branches: [main, "feature/**"]
   workflow_dispatch:
 
+permissions:
+  pull-requests: write
+
 jobs:
   # -------------------------------------------------------
   # Formal checks (formatting + linting)
@@ -23,11 +26,21 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y shellcheck shfmt
+          curl -LsSf https://github.com/rvben/rumdl/releases/download/v0.0.181/rumdl-v0.0.181-x86_64-unknown-linux-gnu.tar.gz | sudo tar xzf - -C /usr/local/bin
 
       - name: 🔍 Run formal checks
         run: |
-          echo "Running ./build check..."
-          ./build check
+          # Disable link check since this is done later
+          echo "Running ./build check ..."
+          ./build check --skip-link
+
+      - name: 🔍 Checks for broken links
+        uses: lycheeverse/lychee-action@v2
+
+      - name: Comment broken links
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: lychee/out.md
 
   # -------------------------------------------------------
   # Bats test suite across OS versions

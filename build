@@ -33,6 +33,7 @@ command_test() {
 command_check() {
   local do_style_check=true
   local do_static_analysis=true
+  local skip_link_check=false
   local status=0
 
   # Parse options
@@ -40,6 +41,7 @@ command_check() {
     case "$1" in
     --style-only) do_static_analysis=false ;;
     --analyis-only) do_style_check=false ;;
+    --skip-link) skip_link_check=true ;;
     -*)
       echo "Unknown option: $1" >&2
       return 2
@@ -49,12 +51,21 @@ command_check() {
     shift
   done
 
-  if "$do_style_check"; then
+  if "${do_style_check}"; then
     run_check_tool shfmt --diff . || status=$?
+    # For now don't fail the check if rumdl is not installed or the
+    # documentation is not perfect.
+    run_check_tool rumdl check . || true
   fi
 
-  if "$do_static_analysis"; then
+  if "${do_static_analysis}"; then
     run_check_tool shellcheck src/*.bash test/*.bats || status=$?
+  fi
+
+  if "${skip_link_check}"; then
+    echo "Skip checking links in documentation."
+  else
+    run_check_tool lychee --cache . || status=$?
   fi
 
   return "$status"

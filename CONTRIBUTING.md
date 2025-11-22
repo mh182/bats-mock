@@ -202,6 +202,8 @@ Your development environment should provide the following tooling:
   Optionally accepts the `BINDIR` env to provide the location of `bats`.
 - [shfmt][shfmt] to format/check the style guide
 - [ShellCheck][shellcheck] for static code analyis
+- [rumdl](https://github.com/rvben/rumdl) to format/check Markdown documention
+- [lychee](https://github.com/lycheeverse/lychee) to check links in documention
 
 As an alternative use `script/install_bats install`
 which will install `bats-core` in `/usr/local`.
