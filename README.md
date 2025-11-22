@@ -38,7 +38,7 @@ For changes and version history see [CHANGELOG](CHANGELOG.md).
 - [Contributing](#contributing)
 - [About this fork](#about-this-fork)
 
-## ⚙️ Installation
+## Installation
 
 You can use **bats-mock** in two main ways, depending on how you organize your Bats tests:
 
