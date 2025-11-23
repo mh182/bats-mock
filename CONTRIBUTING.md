@@ -32,6 +32,9 @@ The community looks forward to your contributions. 🎉
   - [Suggesting enhancements](#suggesting-enhancements)
   - [Your first code contribution](#your-first-code-contribution)
   - [Improving the documentation](#improving-the-documentation)
+- [Branching and merging strategy](#branching-and-merging-strategy)
+  - [Branch Types](#branch-types)
+  - [Pull Requests](#pull-requests)
 - [Styleguides](#styleguides)
   - [Coding conventions](#coding-conventions)
   - [Commit messages](#commit-messages)
@@ -107,7 +110,7 @@ to help us fix any potential bug as fast as possible.
 
 <!-- omit in toc -->
 
-#### How do i submit a good bug report?
+#### How do I submit a good bug report?
 
 > You must never report security related issues, vulnerabilities or bugs
 > including sensitive information to the issue tracker, or elsewhere in public.
@@ -173,7 +176,7 @@ to understand your suggestion and find related suggestions.
 
 <!-- omit in toc -->
 
-#### How do i submit a good enhancement suggestion?
+#### How do I submit a good enhancement suggestion?
 
 Enhancement suggestions are tracked as [GitHub issues](https://github.com/mh182/bats-mock/issues).
 
@@ -205,14 +208,26 @@ Your development environment should provide the following tooling:
 - [rumdl](https://github.com/rvben/rumdl) to format/check Markdown documention
 - [lychee](https://github.com/lycheeverse/lychee) to check links in documention
 
-As an alternative use `script/install_bats install`
-which will install `bats-core` in `/usr/local`.
+The recommended way to set up a consistent development environment is
+to use a container image.
+This allows you to run quality checks and the test suite
+in a fully isolated and reproducible environment.
 
-> **Note**: You may need to run `install_bats` with `sudo`
-> if you do not have permission to write to the installation prefix.
+To enable container-based development,
+define the environment variable `BATS_MOCK_DEV_CONTAINER`
+with the name of the image you want to build:
 
 ```bash
-# Run tests
+# Create a development container with all required tools
+export BATS_MOCK_DEV_CONTAINER=bats-mock-dev
+```
+
+When `BATS_MOCK_DEV_CONTAINER` is set,
+the first invocation of `./build` will automatically build the container image
+using the `.devcontainer/Containerfile`.
+
+```bash
+# Run all tests
 ./build test
 
 # Check style guide and static code analyis
@@ -225,15 +240,19 @@ which will install `bats-core` in `/usr/local`.
 ./build check --analyis-only
 ```
 
-Alternatively you may use the official Bats docker image
-to run the tests in isolation.
-For more information read
-the [Bats Docker Usage Guide][bats-docker-usage-guide].
+If a test fails and you want to investigate the issue interactively,
+you can start a shell inside the development container:
 
 ```bash
-# Run tests
-docker run -it -v "$PWD:/code" bats/bats:latest test
+# Bind-mount the project root into /code inside the container
+podman run -it --rm -v "$PWD:/code" --entrypoint /bin/bash $BATS_MOCK_DEV_CONTAINER
 ```
+
+As an alternative for containers, use `script/install_bats install`
+which will install `bats-core` in `/usr/local`.
+
+> **Note**: You may need to run `install_bats` with `sudo`
+> if you do not have permission to write to the installation prefix.
 
 ### Improving the documentation
 
@@ -258,8 +277,6 @@ When contributing documentation:
 
 This ensures consistent formatting and improves collaboration for everyone.
 
-Tools for checking your documentation:
-
 <!-- Links -->
 
 [semantic-linefeeds]: https://rhodesmill.org/brandon/2012/one-sentence-per-line/
@@ -268,6 +285,40 @@ Tools for checking your documentation:
 Tools to check out:
 - [dprint](https://dprint.dev/) a pluggable and configurable code formatting platform written in Rust.
 -->
+
+## Branching and merging strategy
+
+This project follows a [**Trunk-Based Development**](https://trunkbaseddevelopment.com/) workflow.
+The `main` branch is the single long-lived branch
+and always reflects the latest stable state.
+
+### Branch Types
+
+<!-- omit in toc -->
+
+#### **Main Branch**
+
+- Long-lived branch: `main`
+- Always stable and releasable
+- All releases are created from `main`
+
+<!-- omit in toc -->
+
+#### **Feature Branches**
+
+- Short-lived branches created for each change
+- Must branch off from `main`
+- **Must be rebased on top of the latest `main` before opening a pull request**
+- We aim for a **linear commit history** (no merge commits)
+
+### Pull Requests
+
+- Every change must be submitted through a pull request
+- Pull requests require:
+  - Successful CI checks
+  - Review and approval by **at least one maintainer**
+- Pull requests are merged **without merge commits**
+  to keep the history linear (fast-forward or squash merges)
 
 ## Styleguides
 
@@ -367,6 +418,5 @@ This guide is based on the [contributing.md](https://contributing.md/generator/)
 <!-- Links -->
 
 [bats-core]: https://github.com/bats-core/bats-core
-[bats-docker-usage-guide]: https://bats-core.readthedocs.io/en/stable/docker-usage.html
 [shfmt]: https://github.com/mvdan/sh
 [shellcheck]: https://www.shellcheck.net
