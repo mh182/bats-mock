@@ -27,7 +27,12 @@ command_test() {
     exit 1
   fi
   PATH="${PATH}:${BINDIR}"
-  bats -t test/"$([[ -n "$1" ]] && echo "$1.bats")"
+  if [[ $# -eq 0 ]]; then
+    # Run all tests if no arguments are provided
+    bats test
+  else
+    bats "$@"
+  fi
 }
 
 command_check() {
@@ -95,7 +100,40 @@ run_check_tool() {
   fi
 }
 
+run_in_container() {
+  local container_cli
+
+  echo "Using dev container: ${BATS_MOCK_DEV_CONTAINER}"
+  if command -v podman >/dev/null 2>&1; then
+    container_cli=podman
+  elif command -v docker >/dev/null 2>&1; then
+    container_cli=docker
+  else
+    echo "❌ Neither podman nor docker is installed." >&2
+    return 1
+  fi
+
+  if ! ${container_cli} image inspect "${BATS_MOCK_DEV_CONTAINER}" >/dev/null 2>&1; then
+    echo "Building container image '${BATS_MOCK_DEV_CONTAINER}"
+    ${container_cli} build -t "${BATS_MOCK_DEV_CONTAINER}" -f ./.devcontainer/Containerfile .
+  fi
+
+  ${container_cli} run -it --rm \
+    -v "$PWD":/code \
+    -w /code \
+    --entrypoint /bin/bash \
+    "$BATS_MOCK_DEV_CONTAINER" \
+    ./build "$@"
+}
+
 main() {
+  # If BATS_MOCK_CONTAINER is set → run inside container
+  if [[ -n "${BATS_MOCK_DEV_CONTAINER:-}" ]]; then
+    run_in_container "$@"
+    return
+  fi
+
+  # Normal non-container execution
   if [[ "${PREFIX:0:1}" != '/' ]]; then
     echo "$(basename "$0"): PREFIX must be an absolute path" >&2
     exit 1
