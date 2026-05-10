@@ -5,7 +5,7 @@
 A [Bats][bats-core] helper library providing mocking functionality.
 
 ```bash
-load bats-mock
+bats_load_library bats-mock
 
 @test "postgres.sh starts Postgres" {
   mock="$(mock_create)"
@@ -35,6 +35,9 @@ For changes and version history see [CHANGELOG](CHANGELOG.md).
   - [Mocking a failure](#mocking-a-failure)
   - [Testing in a deterministic setup](#testing-in-a-deterministic-setup)
 - [Installation](#installation)
+  - [Installation as a container image](#installation-as-a-container-image)
+  - [Installation as a Git submodule](#installation-as-a-git-submodule)
+  - [Installation into the Bats library path](#installation-into-the-bats-library-path)
 - [Usage](#usage)
   - Mock generation [`mock_create`](#mock_create)
   - Mock customization [`mock_set_status`](#mock_set_status), [`mock_set_output`](#mock_set_output), and
@@ -80,11 +83,60 @@ the following resources offer great introductions:
 
 ### Quick installation
 
-First, we’ll set up a minimal Bash project
-and install the tools we need for testing:
-`bats` along with its helper libraries, and `bats-mock`.
+This tutorial starts with a minimal project layout:
 
-We’ll use a very simple project structure, shown below:
+```text
+tutorial/
+├── src
+└── test
+```
+
+Initialize the project:
+
+```bash
+mkdir -p tutorial/{src,test}
+cd tutorial
+git init
+```
+
+The easiest way to run Bats tests is to use a container image
+that already includes Bats, helper libraries, and bats-mock.
+This avoids relying on a local Bats installation.
+
+To build the image,
+clone this repository to get the Containerfile and build scripts.
+
+```bash
+git clone https://github.com/mh182/bats-mock.git
+(cd bats-mock && docker build -f Containerfile -t bats-mock:latest .)
+rm -rf bats-mock
+```
+
+Create a `bats` alias that runs tests through the container image.
+
+```sh
+# Create an alias to simplify calling bats
+alias bats='docker run --rm -it -v "$PWD:/code" -w /code bats-mock:latest'
+```
+
+If you cannot use containers, or prefer not to,
+use the submodule-based setup below.
+
+```sh
+# In your project root
+git submodule add https://github.com/bats-core/bats-core.git test/bats
+git submodule add https://github.com/bats-core/bats-support test/test_helper/bats-support
+git submodule add https://github.com/bats-core/bats-assert test/test_helper/bats-assert
+git submodule add https://github.com/bats-core/bats-file test/test_helper/bats-file
+git submodule add https://github.com/mh182/bats-mock test/test_helper/bats-mock
+
+# Create an alias to simplify calling bats
+alias bats=$PWD/test/bats/bin/bats
+# Provide location of helper libraries, used by bats_load_library
+export BATS_LIB_PATH=$PWD/test/test_helper
+```
+
+If you use the submodule fallback, your project structure becomes:
 
 ```text
 tutorial/
@@ -98,29 +150,52 @@ tutorial/
         └── bats-support
 ```
 
-Initialize the project
+Verify your `bats` setup.
 
 ```bash
-mkdir -p tutorial/{src,test}
-cd tutorial
-git init
-```
-
-Install `bats` and `bats-mock` as Git submodules and verify the setup
-
-```bash
-git submodule add https://github.com/bats-core/bats-core.git test/bats
-git submodule add https://github.com/bats-core/bats-support test/test_helper/bats-support
-git submodule add https://github.com/bats-core/bats-assert test/test_helper/bats-assert
-git submodule add https://github.com/bats-core/bats-file test/test_helper/bats-file
-git submodule add https://github.com/mh182/bats-mock test/test_helper/bats-mock
-
-# Create alias to simplify the call to bats
-alias bats=$PWD/test/bats/bin/bats
-# Verify setup
 bats --version
 Bats 1.13.0
 ```
+
+After verifying that `bats` is available,
+create `test/verify-setup.bats`
+to validate that all helper libraries can be loaded,
+including `bats-mock`:
+
+```bash
+cat > test/verify-setup.bats <<EOF
+#!/usr/bin/env bats
+
+bats_require_minimum_version 1.5.0
+
+bats_load_library bats-support
+bats_load_library bats-assert
+bats_load_library bats-mock
+
+@test "verify bats_load_library bats-mock" {
+  mock_echo="\$(mock_create echo)"
+
+  run "\${mock_echo}" "hello"
+
+  assert_success
+  assert_equal "\$(mock_get_call_num "\${mock_echo}")" 1
+}
+EOF
+
+chmod +x test/verify-setup.bats
+```
+
+Run this test file to verify the setup end-to-end:
+
+```bash
+bats test
+verify-setup.bats
+ ✓ verify bats_load_library bats-mock
+
+1 test, 0 failures
+```
+
+If the test passes, you are ready to start the tutorial.
 
 ### Writing the first mock test
 
@@ -141,12 +216,12 @@ Create `test/download.bats` with the following content:
 bats_require_minimum_version 1.5.0
 
 # Load Bats helper libraries for assertions and file operations
-load 'test_helper/bats-support/load'
-load 'test_helper/bats-assert/load'
-load 'test_helper/bats-file/load'
+bats_load_library bats-support
+bats_load_library bats-assert
+bats_load_library bats-file
 
 # Load Bats Mock library for mocking commands
-load 'test_helper/bats-mock/load'
+bats_load_library bats-mock
 
 setup() {
   # Get the containing directory of this file. Use $BATS_TEST_FILENAME instead
@@ -199,7 +274,7 @@ download.bats
  ✗ downloads a file from URL and stores it at target location
    (in test file test/download.bats, line 42)
      `download.bash "https://example.com/file.txt" "${target}"' failed with status 127
-   $TUTORIAL_DIR/tutorial/test/download.bats: line 42: download.bash: command not found
+   $TUTORIAL_DIR/tutorial/test/download.bats: line 46: download.bash: command not found
 
 1 test, 1 failure
 ```
@@ -235,9 +310,10 @@ main "$@"
 
 Make the script executable and run the test again.
 
-```bash
+```sh
 chmod +x src/download.bash
 
+# Run the tests
 bats test
 download.bats
  ✓ downloads a file from URL and stores it at target location
@@ -277,7 +353,16 @@ Create a new test in `test/download.bats`:
 The new test passes immediately since `src/download.bash` runs with `set -e`,
 which propagates the mocked failure and causes the script to exit.
 
-`curl` default behavior on a non existing URL (404) is
+```sh
+bats test
+download.bats
+ ✓ downloads a file from URL and stores it at target location
+ ✓ fails when curl returns an error
+
+2 tests, 0 failures
+```
+
+`curl` default behavior on a non-existing URL (404) is
 to download the web-page showing the "404 Not Found" error
 and return a 0 exit code.
 `curl` only returns exit code 22 when the `--fail` or `-f` flag is used.
@@ -290,7 +375,7 @@ This demonstrates a common risk when using mocks:
 they can give a false sense of correctness
 if they don’t accurately represent the real command’s behavior.
 
-Lets add a test that verifies the arguments passed to `curl`
+Let's add a test that verifies the arguments passed to `curl`
 to ensure we are calling it correctly.
 
 ```bash
@@ -302,8 +387,21 @@ to ensure we are calling it correctly.
   # Act - expect failure
   run download.bash "${url}" "${target}"
 
+  # Use -f to fail with exit code for 400 codes or greater
   assert_equal "$(mock_get_call_args "${mock_curl}")" "-fsSL ${url} -o ${target}"
 }
+```
+
+As expected, the new test also passes because we call `curl` with the `-f` flag.
+
+```sh
+➜ bats test
+download.bats
+ ✓ downloads a file from URL and stores it at target location
+ ✓ fails when curl returns an error
+ ✓ curl is called with correct arguments
+
+3 tests, 0 failures
 ```
 
 ### Testing in a deterministic setup
@@ -406,11 +504,9 @@ main() {
 main "$@"
 ```
 
-All tests are passing — and with this setup in place,
-you're ready to keep developing Bash scripts safely,
-confidently, and without surprises.
+All tests are now passing.
 
-```bash
+```sh
 ➜ bats test
 download.bats
  ✓ downloads a file from URL and stores it at target location
@@ -421,27 +517,72 @@ download.bats
 4 tests, 0 failures
 ```
 
+This concludes the tutorial.
+
 ## Installation
 
-You can use **bats-mock** in two main ways,
+You can use **bats-mock** in the following ways,
 depending on how you organize your Bats tests:
 
-1. As a Git submodule (project-local installation)
-2. Installed into your system or user Bats library path
+1. Using a container image based on the official `bats/bats` image
+2. As a Git submodule (project-local installation)
+3. Installed into your system or user Bats library path
 
-Both approaches require [Bats Core](https://github.com/bats-core/bats-core)
+The latter two approaches require [Bats Core](https://github.com/bats-core/bats-core)
 to be installed and available in your `PATH`.
 
-### Installation as a Git submodule (recommended for projects)
+### Installation as a container image
+
+This repository includes a `Containerfile` that extends the official
+[`bats/bats`](https://hub.docker.com/r/bats/bats) image and installs
+`bats-mock` into the Bats library path.
+
+Build the image with Docker:
+
+```sh
+git clone https://github.com/mh182/bats-mock.git
+(cd bats-mock && docker build -f Containerfile -t bats-mock:latest .)
+rm -rf bats-mock
+```
+
+Run your tests from the project directory with Docker:
+
+```sh
+# Assuming your tests are located in the directory 'test'
+docker run --rm -it -v "$PWD:/code" -w /code bats-mock:latest test
+```
+
+Inside this image, `bats-mock` is available for `bats_load_library`.
+
+```sh
+# At the beginning of your test files
+bats_load_library bats-mock
+```
+
+For additional runtime options and Docker usage patterns,
+see the [Docker Usage Guide](https://bats-core.readthedocs.io/en/stable/docker-usage.html)
+in the official Bats documentation.
+
+### Installation as a Git submodule
 
 This is the most common setup
 when `bats-mock` is used within a project repository as `git submodule`
 and described in the [bats-core quick installation guide](https://bats-core.readthedocs.io/en/stable/tutorial.html#quick-installation).
 It keeps the dependency version-controlled and local to your project.
 
-```bash
+```sh
 # From your project root
+mkdir -p test/test_helper
 git submodule add https://github.com/mh182/bats-mock.git test/test_helper/bats-mock
+```
+
+Export `BATS_LIB_PATH` so it points to the directory
+where the Bats libraries are located;
+otherwise, `bats_load_library` will not find `bats-mock`.
+
+```sh
+# From your project root
+export BATS_LIB_PATH=$PWD/test/test_helper
 ```
 
 ### Installation into the Bats library path
@@ -452,16 +593,19 @@ you can install it into the Bats library path.
 
 First, clone the repository:
 
-```bash
+```sh
 git clone https://github.com/mh182/bats-mock.git
 cd bats-mock
 ```
 
 Then, install [Bats][bats-core] if it's not already available:
 
-```bash
+```sh
 # Install bats-core in /usr/local (may require sudo)
 ./script/install_bats
+
+# Install bats-mock in /usr/local/lib
+./build install
 ```
 
 > **Note**: You may need to run `install_bats` with `sudo`
@@ -470,7 +614,7 @@ Then, install [Bats][bats-core] if it's not already available:
 You can also install both Bats Core
 and bats-mock under a custom prefix (e.g., `$HOME/.local`):
 
-```bash
+```sh
 # Install bats in $HOME/.local/bin
 PREFIX=$HOME/.local ./script/install_bats
 
@@ -482,7 +626,7 @@ Finally make sure `BATS_LIB_PATH` points to the directory
 where the Bats libraries are located.  
 Following our example above:
 
-```bash
+```sh
 export BATS_LIB_PATH=$HOME/.local/lib
 ```
 
@@ -504,7 +648,7 @@ bats_load_library bats-mock
 to mock a pristine system.
 
 ```bash
-load bats-mock
+bats_load_library bats-mock
 
 @test "no HTTP download program installed shows error message" {
  # Mock a system where neither curl, wget, nor fetch is installed
@@ -619,7 +763,7 @@ mock_set_output <mock> (<output>|-) [<n>]
 
 Sets the output of the mock. The mock outputs nothing by default.
 
-If the output is specified as `-` then it is going to be read from `STDIN`.
+If the output is specified as `-`, it is read from `STDIN`.
 
 The optional `n` argument behaves similarly to the one of `mock_set_exit_code`.
 
@@ -629,12 +773,12 @@ The optional `n` argument behaves similarly to the one of `mock_set_exit_code`.
 mock_set_side_effect <mock> (<side_effect>|-) [<n>]
 ```
 
-Sets the side effect of the mock. The side effect is a bash code to be
+Sets the side effect of the mock. The side effect is Bash code to be
 sourced by the mock when it is called.
 
 No side effect is set by default.
 
-If the side effect is specified as `-` then it is going to be read from `STDIN`.
+If the side effect is specified as `-`, it is read from `STDIN`.
 
 The optional `n` argument behaves similarly to the one of `mock_set_exit_code`.
 
@@ -652,8 +796,8 @@ Returns the number of times the mock was called.
 mock_get_call_user <mock> [<n>]
 ```
 
-Returns the user the mock was called with the `n`-th time. If no `n`
-is specified then assuming the last call.
+Returns the user the mock was called with the `n`-th time.
+If no `n` is specified, the last call is assumed.
 
 It requires the mock to be called at least once.
 
@@ -664,7 +808,7 @@ mock_get_call_args <mock> [<n>]
 ```
 
 Returns the arguments line the mock was called with the `n`-th time.
-If no `n` is specified then assuming the last call.
+If no `n` is specified, the last call is assumed.
 
 It requires the mock to be called at least once.
 
@@ -674,8 +818,9 @@ It requires the mock to be called at least once.
 mock_get_call_env <mock> <variable> [<n>]
 ```
 
-Returns the value of the environment variable the mock was called with
-the `n`-th time. If no `n` is specified then assuming the last call.
+Returns the value of the environment variable the mock was called
+with the `n`-th time.
+If no `n` is specified, the last call is assumed.
 
 It requires the mock to be called at least once.
 
