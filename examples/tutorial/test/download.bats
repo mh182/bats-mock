@@ -4,12 +4,12 @@
 bats_require_minimum_version 1.5.0
 
 # Load Bats helper libraries for assertions and file operations
-load 'test_helper/bats-support/load'
-load 'test_helper/bats-assert/load'
-load 'test_helper/bats-file/load'
+bats_load_library bats-support
+bats_load_library bats-assert
+bats_load_library bats-file
 
 # Load Bats Mock library for mocking commands
-load 'test_helper/bats-mock/load'
+bats_load_library bats-mock
 
 setup() {
   # Get the containing directory of this file. Use $BATS_TEST_FILENAME instead
