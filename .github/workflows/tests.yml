@@ -13,6 +13,7 @@ on:
 
 permissions:
   pull-requests: write
+  packages: read
 
 jobs:
   # -------------------------------------------------------
@@ -26,25 +27,50 @@ jobs:
       - name: 🛎️ Checkout repository
         uses: actions/checkout@v5
 
-      - name: 🧰 Install dependencies
+      - name: 🧮 Read image version
+        id: image-version
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y shellcheck shfmt
-          curl -LsSf https://github.com/rvben/rumdl/releases/download/v0.0.181/rumdl-v0.0.181-x86_64-unknown-linux-gnu.tar.gz | sudo tar xzf - -C /usr/local/bin
+          image_version="$(tr -d '[:space:]' < .devcontainer/image-version)"
+          if ! printf '%s\n' "${image_version}" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'; then
+            echo "Invalid semantic version in .devcontainer/image-version: ${image_version}" >&2
+            exit 1
+          fi
+          echo "image_ref=ghcr.io/${GITHUB_REPOSITORY,,}-dev:${image_version}" >> "${GITHUB_OUTPUT}"
+
+      - name: 🔐 Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📥 Pull development container image
+        run: docker pull "${{ steps.image-version.outputs.image_ref }}"
 
       - name: 🔍 Run formal checks
         run: |
-          # Disable link check since this is done later
           echo "Running ./build check ..."
-          ./build check --skip-link
+          docker run --rm \
+            -v "$PWD:/code" \
+            -w /code \
+            --entrypoint /bin/bash \
+            "${{ steps.image-version.outputs.image_ref }}" \
+            ./build check
 
-      - name: 🔍 Checks for broken links
-        uses: lycheeverse/lychee-action@v2
-
-      - name: Comment broken links
+      - name: Comment broken links in documentation
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          path: lychee/out.md
+          path: .lychee-out.md
+
+      - name: 🧪 Run Bats tests in development container
+        run: |
+          echo "Running Bats tests..."
+          docker run --rm \
+            -v "$PWD:/code" \
+            -w /code \
+            --entrypoint /bin/bash \
+            "${{ steps.image-version.outputs.image_ref }}" \
+            -lc 'bats --version && bats test --print-output-on-failure'
 
   # -------------------------------------------------------
   # Bats test suite across OS versions

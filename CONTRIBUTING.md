@@ -38,6 +38,8 @@ The community looks forward to your contributions. 🎉
 - [Styleguides](#styleguides)
   - [Coding conventions](#coding-conventions)
   - [Commit messages](#commit-messages)
+- [Release management](#release-management)
+  - [Release a devcontainer image](#release-a-devcontainer-image)
 
 ## Code of conduct
 
@@ -431,6 +433,34 @@ Rules for creating a great commit message:
     Great candidates include information that's
     not present in the content itself
     as well as guidance to understand the changes more quickly.
+
+## Release management
+
+### Release a devcontainer image
+
+The devcontainer image is versioned with Semantic Versioning in
+`.devcontainer/image-version`.
+The CI workflow builds and publishes the image tag as
+`ghcr.io/mh182/bats-mock-dev:<version>`.
+
+Follow these steps to create a new devcontainer image release:
+
+1. Update `.devcontainer/Containerfile` with your image changes.
+2. Bump `.devcontainer/image-version` to the next semantic version.
+3. Open a pull request to `main`.
+   Keep this PR limited to files used by the `Devcontainer Image` workflow:
+   `.devcontainer/Containerfile`, `.devcontainer/image-version`,
+   and `.github/workflows/devcontainer-image.yml`.
+   Do not include unrelated source or test changes in the same PR.
+   Otherwise `.github/workflows/tests.yml` runs in parallel
+   and may fail because the new container image version is not available yet.
+4. Wait for the `Devcontainer Image` workflow to pass:
+   - The guard job fails the PR if `Containerfile` changed
+     without a corresponding version bump.
+   - The build job runs `./build check` and `./build test`
+     inside the new image.
+5. Approve the `container-publish` environment deployment when prompted
+   (if required reviewers are configured).
 
 <!-- omit in toc -->
 
