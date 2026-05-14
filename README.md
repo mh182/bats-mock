@@ -46,7 +46,6 @@ For changes and version history see [CHANGELOG](CHANGELOG.md).
     [`mock_get_call_args`](#mock_get_call_args), and [`mock_get_call_env`](#mock_get_call_env)
   - Path utilities [`path_prepend`](#path_prepend), [`path_rm`](#path_rm)
   - Mock environment [`mock_bin_dir`](#mock_bin_dir)
-
 - [Contributing](#contributing)
 - [About this fork](#about-this-fork)
 
