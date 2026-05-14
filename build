@@ -8,31 +8,15 @@ set -e -o pipefail
 : "${LIBDIR:="${PREFIX}/lib"}"
 : "${BINDIR:="${PREFIX}/bin"}"
 
-command_install() {
-  if [[ "${LIBDIR:0:1}" != '/' ]]; then
-    echo "$(basename "$0"): LIBDIR must be an absolute path" >&2
-    exit 1
-  fi
-
-  BATS_MOCK_ROOT="${0%/*}"
-  BATS_LIBDIR=${LIBDIR}/bats-mock
-  install -d -m 755 "${BATS_LIBDIR}/src"
-  install -v -m 755 "${BATS_MOCK_ROOT}/load.bash" "${BATS_LIBDIR}"
-  install -v -m 755 "${BATS_MOCK_ROOT}/src/"* "${BATS_LIBDIR}/src"
-}
-
-command_test() {
-  if [[ "${BINDIR:0:1}" != '/' ]]; then
-    echo "$(basename "$0"): BINDIR must be an absolute path" >&2
-    exit 1
-  fi
-  PATH="${PATH}:${BINDIR}"
-  if [[ $# -eq 0 ]]; then
-    # Run all tests if no arguments are provided
-    bats test
-  else
-    bats "$@"
-  fi
+usage() {
+  echo "Usage: $(basename "$0") <command> [options]" >&2
+  echo "" >&2
+  echo "Available commands:" >&2
+  echo "  check      Run style and static analysis checks" >&2
+  echo "  test       Run the bats test suite" >&2
+  echo "  image      Build the development container image" >&2
+  echo "  install    Install bats-mock to the system" >&2
+  exit 1
 }
 
 command_check() {
@@ -100,25 +84,85 @@ run_check_tool() {
   fi
 }
 
-run_in_container() {
-  local container_cli
+command_install() {
+  if [[ "${LIBDIR:0:1}" != '/' ]]; then
+    echo "$(basename "$0"): LIBDIR must be an absolute path" >&2
+    exit 1
+  fi
 
-  echo "Using dev container: ${BATS_MOCK_DEV_CONTAINER}"
+  BATS_MOCK_ROOT="${0%/*}"
+  BATS_LIBDIR=${LIBDIR}/bats-mock
+  install -d -m 755 "${BATS_LIBDIR}/src"
+  install -v -m 755 "${BATS_MOCK_ROOT}/load.bash" "${BATS_LIBDIR}"
+  install -v -m 755 "${BATS_MOCK_ROOT}/src/"* "${BATS_LIBDIR}/src"
+}
+
+command_test() {
+  if [[ "${BINDIR:0:1}" != '/' ]]; then
+    echo "$(basename "$0"): BINDIR must be an absolute path" >&2
+    exit 1
+  fi
+  PATH="${PATH}:${BINDIR}"
+  if [[ $# -eq 0 ]]; then
+    # Run all tests if no arguments are provided
+    bats test
+  else
+    bats "$@"
+  fi
+}
+
+container_cli() {
   if command -v podman >/dev/null 2>&1; then
-    container_cli=podman
+    echo podman
   elif command -v docker >/dev/null 2>&1; then
-    container_cli=docker
+    echo docker
   else
     echo "❌ Neither podman nor docker is installed." >&2
-    return 1
+    exit 1
+  fi
+}
+
+command_image() {
+  local image_name
+
+  image_name="$(resolve_container_image_name "$@")"
+  build_container_image "${image_name}" || return 1
+  echo "export BATS_MOCK_DEV_CONTAINER=${image_name}"
+}
+
+resolve_container_image_name() {
+  if [[ $# -gt 0 ]]; then
+    echo "$1"
+  elif [[ -n "${BATS_MOCK_DEV_CONTAINER:-}" ]]; then
+    echo "${BATS_MOCK_DEV_CONTAINER}"
+  else
+    echo "Usage: $(basename "$0") image [IMAGE_NAME]" >&2
+    echo "Set BATS_MOCK_DEV_CONTAINER or provide IMAGE_NAME." >&2
+    exit 1
+  fi
+}
+
+build_container_image() {
+  local image_name="$1"
+  local container_runtime
+
+  container_runtime="$(container_cli)"
+
+  echo "Building container image '${image_name}'"
+  "${container_runtime}" build -t "${image_name}" -f ./.devcontainer/Containerfile .
+}
+
+run_in_container() {
+  local container_runtime
+
+  echo "Using dev container: ${BATS_MOCK_DEV_CONTAINER}"
+  container_runtime="$(container_cli)"
+
+  if ! "${container_runtime}" image inspect "${BATS_MOCK_DEV_CONTAINER}" >/dev/null 2>&1; then
+    build_container_image "${BATS_MOCK_DEV_CONTAINER}"
   fi
 
-  if ! ${container_cli} image inspect "${BATS_MOCK_DEV_CONTAINER}" >/dev/null 2>&1; then
-    echo "Building container image '${BATS_MOCK_DEV_CONTAINER}"
-    ${container_cli} build -t "${BATS_MOCK_DEV_CONTAINER}" -f ./.devcontainer/Containerfile .
-  fi
-
-  ${container_cli} run -it --rm \
+  "${container_runtime}" run -it --rm \
     -v "$PWD":/code \
     -w /code \
     --entrypoint /bin/bash \
@@ -127,8 +171,10 @@ run_in_container() {
 }
 
 main() {
+  local command_name="${1:-}"
+
   # If BATS_MOCK_CONTAINER is set → run inside container
-  if [[ -n "${BATS_MOCK_DEV_CONTAINER:-}" ]]; then
+  if [[ -n "${BATS_MOCK_DEV_CONTAINER:-}" && "${command_name}" != 'image' ]]; then
     run_in_container "$@"
     return
   fi
@@ -138,7 +184,12 @@ main() {
     echo "$(basename "$0"): PREFIX must be an absolute path" >&2
     exit 1
   fi
-  "command_${1?'Command must be specified'}" "${@:2}"
+
+  if [[ -z "${command_name}" ]]; then
+    usage
+  fi
+
+  "command_${command_name}" "${@:2}"
 }
 
 main "$@"
