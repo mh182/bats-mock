@@ -213,7 +213,20 @@ to use a container image.
 This allows you to run quality checks and the test suite
 in a fully isolated and reproducible environment.
 
-To enable container-based development,
+This repository already provides a VS Code devcontainer configuration in
+`.devcontainer/vscode/devcontainer.json`.
+If you are using VS Code, follow the official guide to open and use a
+devcontainer: <https://code.visualstudio.com/docs/devcontainers/containers>.
+
+If you are using another editor and it supports devcontainers,
+feel free to contribute an editor-specific `devcontainer.json` in
+`.devcontainer/<editor>/devcontainer.json`.
+
+Using an editor with devcontainer support is optional.
+You can use the regular command line for all development tasks,
+including building the container image and running checks.
+
+To enable container-based development from the command line,
 define the environment variable `BATS_MOCK_DEV_CONTAINER`
 with the name of the image you want to build:
 
