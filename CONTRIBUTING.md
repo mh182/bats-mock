@@ -253,6 +253,16 @@ using the `.devcontainer/Containerfile`.
 ./build check --analyis-only
 ```
 
+You can also build the development image explicitly:
+
+```bash
+# Uses BATS_MOCK_DEV_CONTAINER as image name
+./build image
+
+# Uses the provided image name
+./build image my-bats-mock-dev
+```
+
 If a test fails and you want to investigate the issue interactively,
 you can start a shell inside the development container:
 
