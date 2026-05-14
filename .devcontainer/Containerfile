@@ -2,8 +2,8 @@ ARG bats_ver=latest
 
 FROM docker.io/bats/bats:${bats_ver}
 ARG MODE=755
-ARG rumdl_ver=v0.0.181
-ARG lychee_ver=v0.21.0
+ARG rumdl_ver=v0.1.91
+ARG lychee_ver=v0.24.2
 ARG arch=x86_64-unknown-linux-musl
 
 # https://github.com/opencontainers/image-spec/blob/main/annotations.md
@@ -16,8 +16,10 @@ LABEL org.opencontainers.image.source="https://github.com/mh182/bats-mock"
 LABEL org.opencontainers.image.base.name="docker.io/bats/bats"
 
 RUN apk --no-cache add shellcheck shfmt
-RUN wget -O- https://github.com/lycheeverse/lychee/releases/download/lychee-${lychee_ver}/lychee-${arch}.tar.gz | tar xzf - -C /usr/local/bin
-RUN wget -O- https://github.com/rvben/rumdl/releases/download/${rumdl_ver}/rumdl-${rumdl_ver}-${arch}.tar.gz | tar xzf - -C /usr/local/bin
+RUN wget -O- https://github.com/lycheeverse/lychee/releases/download/lychee-${lychee_ver}/lychee-${arch}.tar.gz | \
+    tar xzf - -C /usr/local/bin --strip-components=1 lychee-${arch}/lychee && \
+    wget -O- https://github.com/rvben/rumdl/releases/download/${rumdl_ver}/rumdl-${rumdl_ver}-${arch}.tar.gz | \
+    tar xzf - -C /usr/local/bin
 
 WORKDIR /code/
 
