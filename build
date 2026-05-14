@@ -54,7 +54,7 @@ command_check() {
   if "${skip_link_check}"; then
     echo "Skip checking links in documentation."
   else
-    run_check_tool lychee --cache . || status=$?
+    run_check_tool lychee --format markdown --output .lychee-out.md --cache . || status=$?
   fi
 
   return "$status"
