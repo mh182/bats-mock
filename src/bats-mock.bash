@@ -1,8 +1,21 @@
 #!/usr/bin/env bash
 #
 # A Bats helper library providing mocking functionality
+#
+# Written in 2018-2021 by Sergey Konoplev <gray dot ru at gmail dot com>,
+# updated in 2025-2026 by Max Hofer <mh182 at chello dot at>.
+#
+# This is free and unencumbered software released into the public domain.
+#
+# Anyone is free to copy, modify, publish, use, compile, sell, or
+# distribute this software, either in source code form or as a compiled
+# binary, for any purpose, commercial or non-commercial, and by any
+# means.
+#
+# For more information, please refer to <http://unlicense.org>
+#
 
-# Assure test isolation by using BATS_TEST_TMPDIR introduced with bats 1.4.0
+# Ensure test isolation by using BATS_TEST_TMPDIR introduced with bats 1.4.0
 bats_require_minimum_version '1.4.0'
 
 # Creates a mock program
@@ -12,7 +25,7 @@ bats_require_minimum_version '1.4.0'
 #   1: Command to mock, optional
 # Returns:
 #   1: If the mock command already exists
-#   1: If the command provided with an absoluth path already exists
+#   1: If the command provided with an absolute path already exists
 # Outputs:
 #   STDOUT: Path to the mock
 #   STDERR: Corresponding error message
@@ -35,14 +48,14 @@ mock_create() {
 
   # If a command name is provided, create a symbolic link to the mock
   if [[ -n "${cmd}" ]]; then
-    # Don't create the mock if we cant create the link
-    cmd=$(mock_set_command "${mock}" "${cmd}") || exit $?
+    # Don't create the mock if we can't create the link
+    cmd=$(mock_set_command "${mock}" "${cmd}") || return $?
   fi
 
-  echo -n 0 >"${mock}.call_num"
-  echo -n 0 >"${mock}.status"
-  echo -n '' >"${mock}.output"
-  echo -n '' >"${mock}.side_effect"
+  printf '%s' 0 >"${mock}.call_num"
+  printf '%s' 0 >"${mock}.status"
+  printf '%s' '' >"${mock}.output"
+  printf '%s' '' >"${mock}.side_effect"
 
   cat <<EOF >"${mock}"
 #!/usr/bin/env bash
@@ -51,7 +64,8 @@ set -e
 
 mock="${mock}"
 
-call_num="\$(( \$(cat \${mock}.call_num) + 1 ))"
+IFS= read -r prev_call_num < "\${mock}.call_num" || true
+call_num="\$(( prev_call_num + 1 ))"
 echo "\${call_num}" > "\${mock}.call_num"
 
 echo "\${_USER:-\$(id -un)}" > "\${mock}.user.\${call_num}"
@@ -75,10 +89,11 @@ else
 fi
 
 if [[ -e "\${mock}.status.\${call_num}" ]]; then
-  exit "\$(cat \${mock}.status.\${call_num})"
+  IFS= read -r status_value < "\${mock}.status.\${call_num}" || true
 else
-  exit "\$(cat \${mock}.status)"
+  IFS= read -r status_value < "\${mock}.status" || true
 fi
+exit "\${status_value}"
 EOF
   chmod +x "${mock}"
 
@@ -89,7 +104,7 @@ EOF
   fi
 }
 
-# Creates a symbolic link with given name to a mock program
+# Creates a symbolic link with the given name to a mock program
 #
 # This method is not meant to be called directly. Use mock_create instead.
 #
@@ -98,7 +113,7 @@ EOF
 #   2: Command name
 # Returns:
 #   1: If the mock command already exists
-#   1: If the command provided with an absoluth path already exists
+#   1: If the command provided with an absolute path already exists
 # Outputs:
 #   STDOUT: Path to the mocked command
 #   STDERR: Corresponding error message
@@ -108,22 +123,22 @@ mock_set_command() {
   local link_name="${mock%/*}/${cmd}"
 
   if [[ "${cmd}" = /* ]]; then
-    # Command with abolute path
+    # Command with absolute path
     if [[ -e "${cmd}" ]]; then
-      echo "mock_create: failed to create command '${cmd}': command exists" >&2
-      exit 1
+      printf "mock_create: failed to create command '%s': command exists\n" "${cmd}" >&2
+      return 1
     fi
     link_name=${cmd}
-    mkdir -p "$(dirname "${link_name}")"
+    mkdir -p "${link_name%/*}"
   elif [[ -e "${link_name}" ]]; then
     # Link already exists: either created by mock_create or mock_bin_dir
     if [[ $(readlink "${link_name}") =~ ${BATS_TEST_TMPDIR} ]]; then
-      # Link pointing to  mock (created by mock_create)
-      echo "mock_create: failed to create command '${cmd}': command exists" >&2
-      exit 1
+      # Link pointing to a mock (created by mock_create)
+      printf "mock_create: failed to create command '%s': command exists\n" "${cmd}" >&2
+      return 1
     else
       # Link pointing to outside $BATS_TEST_TMPDIR (created by mock_bin_dir).
-      # We can savely delete it, to create a new one.
+      # We can safely delete it to create a new one.
       rm "${link_name}"
     fi
   fi
@@ -196,7 +211,7 @@ mock_get_call_user() {
   mock=$(readlink -f "${mock}")
 
   local n
-  n="$(mock_default_n "${mock}" "${2-}")" || exit "$?"
+  n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
 
   cat "${mock}.user.${n}"
 }
@@ -213,7 +228,7 @@ mock_get_call_args() {
   mock=$(readlink -f "${mock}")
 
   local n
-  n="$(mock_default_n "${mock}" "${2-}")" || exit "$?"
+  n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
 
   cat "${mock}.args.${n}"
 }
@@ -232,7 +247,7 @@ mock_get_call_env() {
   mock=$(readlink -f "${mock}")
 
   local n
-  n="$(mock_default_n "${mock}" "${3-}")" || exit "$?"
+  n="$(mock_default_n "${mock}" "${3-}")" || return "$?"
 
   # shellcheck source=/dev/null
   source "${mock}.env.${n}"
@@ -261,9 +276,9 @@ mock_set_property() {
   mock=$(readlink -f "${mock}")
 
   if [[ -n "${n}" ]]; then
-    echo -e "${property_value}" >"${mock}.${property_name}.${n}"
+    printf "%b" "${property_value}" >"${mock}.${property_name}.${n}"
   else
-    echo -e "${property_value}" >"${mock}.${property_name}"
+    printf "%b" "${property_value}" >"${mock}.${property_name}"
   fi
 }
 
@@ -279,7 +294,7 @@ mock_set_property() {
 mock_default_n() {
   local mock="${1?'Mock must be specified'}"
   local call_num
-  call_num="$(cat "${mock}.call_num")"
+  read -r call_num <"${mock}.call_num"
   local n="${2:-${call_num}}"
 
   if [[ "${n}" -eq 0 ]]; then
@@ -287,8 +302,8 @@ mock_default_n() {
   fi
 
   if [[ "${n}" -gt "${call_num}" ]]; then
-    echo "$(basename "$0"): Mock must be called at least ${n} time(s)" >&2
-    exit 1
+    printf "%s: Mock must be called at least %s time(s)\n" "${0##*/}" "${n}" >&2
+    return 1
   fi
 
   echo "${n}"
@@ -307,7 +322,7 @@ path_prepend() {
 
   if [[ "${mock}" != /* ]]; then
     echo "Relative paths are not allowed"
-    exit 1
+    return 1
   fi
 
   if [[ -f "${mock}" ]]; then
@@ -315,7 +330,7 @@ path_prepend() {
     local mock_path="${mock%/*}"
   fi
 
-  # Putting the directory with the mocked comands at the beginning of the PATH
+  # Putting the directory with the mocked commands at the beginning of the PATH
   # so it gets picked up first
   if [[ :${path}: == *:${mock_path}:* ]]; then
     echo "${path}"
@@ -327,7 +342,7 @@ path_prepend() {
 # Returns $PATH without the provided path
 # Arguments:
 #   1: Path to be removed
-#   2: Path from which the 1st argument is removed. Defaults to $PATH if not provided.
+#   2: Path list from which the 1st argument is removed. Defaults to $PATH if not provided.
 # Outputs:
 #   STDOUT: a path without the path provided in ${1}
 path_rm() {
@@ -335,12 +350,13 @@ path_rm() {
   local path=${2:-${PATH}}
   if [[ "${path_or_cmd_to_remove}" != /* ]] && [[ "${path_or_cmd_to_remove}" == *"/"* ]]; then
     echo "Relative paths are not allowed"
-    exit 1
+    return 1
   fi
 
   if [[ "${path_or_cmd_to_remove}" == /* ]]; then
-    # Absolute path to a command or directory, remove the directory and exit
-    _remove_path "${path_or_cmd_to_remove}"
+    # Absolute path to a command or directory, remove the directory and return
+    _remove_path "${path_or_cmd_to_remove}" "${path}" path
+    echo "${path}"
     return
   fi
 
@@ -349,28 +365,30 @@ path_rm() {
   local path_to_cmd
 
   while path_to_cmd=$(PATH=${path} command -v "${path_or_cmd_to_remove}"); do
-    # We can resolved the command
+    # We can resolve the command
     # Use parameter expansion to get the folder portion of the command
     path_to_remove=${path_to_cmd%/*}
-    path=$(_remove_path "${path_to_remove}")
+    _remove_path "${path_to_remove}" "${path}" path
   done
   echo "${path}"
 }
 
 _remove_path() {
   local path_to_remove="${1?'Path to remove must be specified'}"
+  local input_path="${2?'Path list must be specified'}"
+  local output_var_name="${3?'Output variable name must be specified'}"
   # Wrap the path with colons to simplify removal
-  local path=":$path:"
+  local updated_path=":${input_path}:"
   # Replace single colons with double colons for easier string substitution
-  path=${path//":"/"::"}
+  updated_path=${updated_path//":"/"::"}
   # Remove the path
-  path=${path//":${path_to_remove}:"/}
+  updated_path=${updated_path//":${path_to_remove}:"/}
   # Restore single colons
-  path=${path//"::"/":"}
+  updated_path=${updated_path//"::"/":"}
   # Clean up leading/trailing colons
-  path=${path#:}
-  path=${path%:}
-  echo "${path}"
+  updated_path=${updated_path#:}
+  updated_path=${updated_path%:}
+  printf -v "${output_var_name}" '%s' "${updated_path}"
 }
 
 # Returns a path to directory populated with symbolic links to basic commands
@@ -396,14 +414,20 @@ mock_bin_dir() {
       split tail tee tempfile touch tr tty uname uniq unlink
       wc which xargs)
   fi
+
+  local c
+  local target
+  local error_msg
   for c in "${commands[@]}"; do
     if target=$(command -v "$c" 2>&1); then
       # Use 'command -p' to assure ln is found, since '/bin' or '/usr/bin' may be not in $PATH anymore.
       if ! error_msg=$(command -p ln -s "${target}" "${bin_dir}/${c}" 2>&1) && ${customized}; then
-        echo "${error_msg}" && exit 1
+        echo "${error_msg}"
+        return 1
       fi
     elif ${customized}; then
-      echo "$c: command not found" && exit 1
+      printf "%s: command not found" "$c"
+      return 1
     fi
   done
   echo "${bin_dir}"

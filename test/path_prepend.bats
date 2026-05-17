@@ -5,7 +5,7 @@ load mock_test_suite
 @test 'path_prepend requires mock to be specified' {
   run path_prepend
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ 'Mock must be specified' ]]
+  [[ "${output}" =~ Mock\ must\ be\ specified ]]
 }
 
 @test 'path_prepend returns PATH prefixed with the mock directory' {
@@ -39,5 +39,5 @@ load mock_test_suite
 @test "path_prepend doesn't accept relative paths" {
   run path_prepend 'relative/path' '/a/b:/c/d'
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ 'Relative paths are not allowed' ]]
+  [[ "${output}" =~ Relative\ paths\ are\ not\ allowed ]]
 }

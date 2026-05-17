@@ -5,14 +5,14 @@ load mock_test_suite
 @test 'mock_get_call_env requires mock to be specified' {
   run mock_get_call_env
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ 'Mock must be specified' ]]
+  [[ "${output}" =~ Mock\ must\ be\ specified ]]
 }
 
 @test 'mock_get_call_env requires variable to be specified' {
   # shellcheck disable=SC2154
   run mock_get_call_env "${mock}"
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ 'Variable name must be specified' ]]
+  [[ "${output}" =~ Variable\ name\ must\ be\ specified ]]
 }
 
 @test 'mock_get_call_env requires the mock to be called' {
@@ -32,7 +32,7 @@ load mock_test_suite
 @test 'mock_get_call_env requires the mock to be called 1 time' {
   run mock_get_call_env "${mock}" 'VAR' 1
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ \Mock\ must\ be\ called\ at\ least\ 1\ time\(s\) ]]
+  [[ "${output}" =~ Mock\ must\ be\ called\ at\ least\ 1\ time\(s\) ]]
 }
 
 @test 'mock_get_call_env requires the mock to be called 2 times' {
@@ -41,13 +41,13 @@ load mock_test_suite
   [[ "${status}" -eq 0 ]]
   run mock_get_call_env "${mock}" 'VAR' 2
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ \Mock\ must\ be\ called\ at\ least\ 2\ time\(s\) ]]
+  [[ "${output}" =~ Mock\ must\ be\ called\ at\ least\ 2\ time\(s\) ]]
 }
 
 @test 'mock_get_call_env requires the mock to be called 3 times' {
   run mock_get_call_env "${mock}" 'VAR' 3
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ \Mock\ must\ be\ called\ at\ least\ 3\ time\(s\) ]]
+  [[ "${output}" =~ Mock\ must\ be\ called\ at\ least\ 3\ time\(s\) ]]
 }
 
 @test 'mock_get_call_env outputs the n-th call variable' {
