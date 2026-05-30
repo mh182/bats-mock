@@ -129,7 +129,7 @@ mock_set_command() {
       return 1
     fi
     link_name=${cmd}
-    mkdir -p "${link_name%/*}"
+    mkdir -p "${link_name%/*}/"
   elif [[ -e "${link_name}" ]]; then
     # Link already exists: either created by mock_create or mock_bin_dir
     if [[ $(readlink "${link_name}") =~ ${BATS_TEST_TMPDIR} ]]; then
