@@ -5,7 +5,7 @@ load mock_test_suite
 @test 'mock_get_call_args requires mock to be specified' {
   run mock_get_call_args
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ 'Mock must be specified' ]]
+  [[ "${output}" =~ Mock\ must\ be\ specified ]]
 }
 
 @test 'mock_get_call_args requires the mock to be called' {
@@ -26,7 +26,7 @@ load mock_test_suite
 @test 'mock_get_call_args requires the mock to be called 1 time' {
   run mock_get_call_args "${mock}" 1
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" =~ \Mock\ must\ be\ called\ at\ least\ 1\ time\(s\) ]]
+  [[ "${output}" =~ Mock\ must\ be\ called\ at\ least\ 1\ time\(s\) ]]
 }
 
 @test 'mock_get_call_args requires the mock to be called 2 times' {
