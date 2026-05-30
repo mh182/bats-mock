@@ -294,7 +294,7 @@ mock_set_property() {
 mock_default_n() {
   local mock="${1?'Mock must be specified'}"
   local call_num
-  read -r call_num <"${mock}.call_num"
+  IFS= read -r call_num <"${mock}.call_num" || true
   local n="${2:-${call_num}}"
 
   if [[ "${n}" -eq 0 ]]; then
