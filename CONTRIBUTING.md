@@ -340,6 +340,8 @@ and always reflects the latest stable state.
 
 - Every change must be submitted through a pull request
 - Pull request titles must follow the Conventional Commits format
+- Before opening or updating a pull request, run `./build check`.
+  This is the same check command used in the CI pipeline.
 - Pull requests require:
   - Successful CI checks
   - Review and approval by **at least one maintainer**

@@ -1,17 +1,20 @@
 ARG bats_ver=latest
+ARG image_version=latest
 
 FROM docker.io/bats/bats:${bats_ver}
 ARG MODE=755
 ARG rumdl_ver=v0.1.91
+ARG git_cliff_ver=v2.13.1
 ARG lychee_ver=v0.24.2
 ARG arch=x86_64-unknown-linux-musl
+ARG image_version=${image_version}
 
 # https://github.com/opencontainers/image-spec/blob/main/annotations.md
 LABEL maintainer="Max Hofer"
 LABEL org.opencontainers.image.authors="Max Hofer"
-LABEL org.opencontainers.image.title="Bats"
-LABEL org.opencontainers.image.description="Bash Automated Testing System"
-# LABEL org.opencontainers.image.url="https://hub.docker.com/repository/docker/maxh/bats-mock"
+LABEL org.opencontainers.image.title="Bats mock devcontainer"
+LABEL org.opencontainers.image.description="Development container for bats-mock"
+LABEL org.opencontainers.image.url="https://ghcr.io/mh182/bats-mock-dev:${image_version}"
 LABEL org.opencontainers.image.source="https://github.com/mh182/bats-mock"
 LABEL org.opencontainers.image.base.name="docker.io/bats/bats"
 
@@ -19,7 +22,9 @@ RUN apk --no-cache add git shellcheck shfmt
 RUN wget -O- https://github.com/lycheeverse/lychee/releases/download/lychee-${lychee_ver}/lychee-${arch}.tar.gz | \
     tar xzf - -C /usr/local/bin --strip-components=1 lychee-${arch}/lychee && \
     wget -O- https://github.com/rvben/rumdl/releases/download/${rumdl_ver}/rumdl-${rumdl_ver}-${arch}.tar.gz | \
-    tar xzf - -C /usr/local/bin
+    tar xzf - -C /usr/local/bin && \
+    wget -O- https://github.com/orhun/git-cliff/releases/download/${git_cliff_ver}/git-cliff-${git_cliff_ver#v}-x86_64-unknown-linux-musl.tar.gz | \
+    tar xzf - -C /usr/local/bin --strip-components=1 git-cliff-${git_cliff_ver#v}/git-cliff
 
 WORKDIR /code/
 
