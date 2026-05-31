@@ -2,20 +2,32 @@
 #
 # Build
 
-set -e -o pipefail
+set -eu -o pipefail
+SCRIPT_NAME="$(basename "$0")"
 
 : "${PREFIX:=/usr/local}"
 : "${LIBDIR:="${PREFIX}/lib"}"
 : "${BINDIR:="${PREFIX}/bin"}"
 
+# ANSI colors (fall back to plain if not a terminal)
+GREEN=""
+RED=""
+COLOR_RESET=""
+if [[ -t 1 ]]; then
+  GREEN='\033[0;32m'
+  RED='\033[0;31m'
+  COLOR_RESET='\033[0m'
+fi
+
 usage() {
-  echo "Usage: $(basename "$0") <command> [options]" >&2
+  echo "Usage: ${SCRIPT_NAME} <command> [options]" >&2
   echo "" >&2
   echo "Available commands:" >&2
   echo "  check      Run style and static analysis checks" >&2
-  echo "  test       Run the bats test suite" >&2
-  echo "  image      Build the development container image" >&2
+  echo "  changelog  Regenerate CHANGELOG.md with git-cliff" >&2
+  echo "  image      Build the development container image (options: -t imageName)" >&2
   echo "  install    Install bats-mock to the system" >&2
+  echo "  test       Run the bats test suite" >&2
   exit 1
 }
 
@@ -57,6 +69,11 @@ command_check() {
     run_check_tool lychee --format markdown --output .lychee-out.md --cache . || status=$?
   fi
 
+  # Run changelog sync check only for the full check command.
+  if "${do_style_check}" && "${do_static_analysis}"; then
+    check_changelog_up_to_date || status=$?
+  fi
+
   return "$status"
 }
 
@@ -64,29 +81,164 @@ run_check_tool() {
   local tool="$1"
   shift
 
-  # ANSI colors (fall back to plain if not a terminal)
-  local green="" red="" reset=""
-  if [[ -t 1 ]]; then
-    green='\033[0;32m'
-    red='\033[0;31m'
-    reset='\033[0m'
-  fi
-
   echo "Running ${tool}..."
-  if ! command -v "$tool" >/dev/null 2>&1; then
-    echo -e "${red}❌ ${tool} is not installed.${reset}"
-    return 2
-  elif ! ${tool} "$@"; then
-    echo -e "${red}❌ ${tool} check failed.${reset}"
+  require_tool "${tool}"
+
+  if ! ${tool} "$@"; then
+    echo -e "${RED}❌ ${tool} check failed.${COLOR_RESET}"
     return 1
   else
-    echo -e "${green}✅ ${tool} check passed.${reset}"
+    echo -e "${GREEN}✅ ${tool} check passed.${COLOR_RESET}"
+  fi
+}
+
+require_tool() {
+  local tool="$1"
+
+  if ! command -v "${tool}" >/dev/null 2>&1; then
+    echo -e "${RED}❌ ${tool} is not installed.${COLOR_RESET}"
+    return 2
+  fi
+}
+
+check_changelog_up_to_date() {
+  local changelog_stderr warning_lines git_probe_output
+
+  echo "Verifying if changes are commit to CHANGELOG.md ..."
+
+  git_probe_output="$(git rev-parse --is-inside-work-tree 2>&1 || true)"
+  if [[ "${git_probe_output}" != "true" ]]; then
+    echo -e "${RED}❌ CHANGELOG.md verification failed: current directory is not a git worktree.${COLOR_RESET}" >&2
+    if [[ -n "${git_probe_output}" ]]; then
+      printf '%s\n' "${git_probe_output}" >&2
+    fi
+    return 1
+  fi
+
+  # Capture only stderr from git-cliff; keep stdout visible.
+
+  changelog_stderr="$(command_changelog -vv 2>&1 || true)"
+
+  warning_lines="$(printf '%s\n' "${changelog_stderr}" |
+    grep -E "Commit did not match conventional format|WARN" || true)"
+  if [[ -n "${warning_lines}" ]]; then
+    printf '%s\n' "${warning_lines}" >&2
+    echo -e "${RED}❌ CHANGELOG.md verification failed.${COLOR_RESET}" >&2
+    return 1
+  fi
+
+  if ! git diff --quiet -- CHANGELOG.md; then
+    echo -e "${RED}❌ CHANGELOG.md is out of date.${COLOR_RESET}" >&2
+    echo "Amend changes to CHANGELOG.md to your commit before pushing." >&2
+    echo "" >&2
+    git --no-pager diff -- CHANGELOG.md >&2
+    return 1
+  fi
+
+  echo -e "${GREEN}✅ CHANGELOG.md is up to date.${COLOR_RESET}"
+}
+
+# Dispatched in main with arguments, without arguments in check_changelog_up_to_date
+# shellcheck disable=SC2120
+command_changelog() {
+  local changelog_range="v0.1.0..HEAD"
+  local cmd command_str
+
+  require_tool git-cliff
+
+  # Generate changelog only for commits from v0.1.0 onward (Conventional # Commits era),
+  # avoid remote queries, and forward extra args (e.g. -v/-vv).
+  cmd=(git-cliff --offline --config cliff.toml "$@" -- "${changelog_range}")
+  printf -v command_str '%q ' "${cmd[@]}"
+  echo "Updating CHANGELOG.md: ${command_str% }"
+  "${cmd[@]}"
+}
+
+command_image() {
+  # If BATS_MOCK_DEV_CONTAINER is already set, use that as the default image name, otherwise use a sensible default.
+  local image_name="${BATS_MOCK_DEV_CONTAINER:-bats-mock-dev:latest}"
+
+  image_name="$(resolve_container_image_name "${image_name}" "$@")"
+  build_container_image "${image_name}" || return 1
+
+  if [[ -z "${BATS_MOCK_DEV_CONTAINER:-}" || "${BATS_MOCK_DEV_CONTAINER}" != "${image_name}" ]]; then
+    echo "To use this container image for subsequent ./build commands, run:"
+    echo "export BATS_MOCK_DEV_CONTAINER=${image_name}"
+  fi
+}
+
+resolve_container_image_name() {
+  local image_name="${1?'Image name is required'}"
+  shift
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+    -t | --tag)
+      shift
+      if [[ $# -eq 0 || -z "$1" ]]; then
+        echo "${SCRIPT_NAME}: missing value for -t|--tag" >&2
+        exit 2
+      fi
+      image_name="$1"
+      ;;
+    -*)
+      echo "${SCRIPT_NAME}: unknown image option '$1'" >&2
+      exit 2
+      ;;
+    *)
+      echo "${SCRIPT_NAME}: unexpected positional argument '$1'" >&2
+      echo "Usage: ${SCRIPT_NAME} image [-t|--tag <image[:version]>]" >&2
+      exit 2
+      ;;
+    esac
+    shift
+  done
+
+  echo "${image_name}"
+}
+
+build_container_image() {
+  local image_name="$1"
+  local image_version
+  local container_runtime
+
+  image_version="$(extract_image_version_from_tag "${image_name}")"
+  container_runtime="$(container_cli)"
+
+  echo "Building container image '${image_name}'"
+  "${container_runtime}" build \
+    -t "${image_name}" \
+    --build-arg "image_version=${image_version}" \
+    -f ./.devcontainer/Containerfile \
+    .
+}
+
+extract_image_version_from_tag() {
+  local image_name="$1"
+  local tail
+
+  tail="${image_name##*/}"
+  if [[ "${tail}" == *:* ]]; then
+    echo "${tail##*:}"
+  else
+    echo "latest"
+  fi
+}
+
+container_cli() {
+  if command -v podman >/dev/null 2>&1; then
+    echo podman
+  elif command -v docker >/dev/null 2>&1; then
+    echo docker
+  else
+    echo "${RED}❌ Neither podman nor docker is installed.${COLOR_RESET}" >&2
+    exit 1
   fi
 }
 
 command_install() {
   if [[ "${LIBDIR:0:1}" != '/' ]]; then
-    echo "$(basename "$0"): LIBDIR must be an absolute path" >&2
+    echo "${SCRIPT_NAME}: LIBDIR must be an absolute path" >&2
     exit 1
   fi
 
@@ -99,7 +251,7 @@ command_install() {
 
 command_test() {
   if [[ "${BINDIR:0:1}" != '/' ]]; then
-    echo "$(basename "$0"): BINDIR must be an absolute path" >&2
+    echo "${SCRIPT_NAME}: BINDIR must be an absolute path" >&2
     exit 1
   fi
   PATH="${PATH}:${BINDIR}"
@@ -111,53 +263,13 @@ command_test() {
   fi
 }
 
-container_cli() {
-  if command -v podman >/dev/null 2>&1; then
-    echo podman
-  elif command -v docker >/dev/null 2>&1; then
-    echo docker
-  else
-    echo "❌ Neither podman nor docker is installed." >&2
-    exit 1
-  fi
-}
-
-command_image() {
-  local image_name
-
-  image_name="$(resolve_container_image_name "$@")"
-  build_container_image "${image_name}" || return 1
-  echo "export BATS_MOCK_DEV_CONTAINER=${image_name}"
-}
-
-resolve_container_image_name() {
-  if [[ $# -gt 0 ]]; then
-    echo "$1"
-  elif [[ -n "${BATS_MOCK_DEV_CONTAINER:-}" ]]; then
-    echo "${BATS_MOCK_DEV_CONTAINER}"
-  else
-    echo "Usage: $(basename "$0") image [IMAGE_NAME]" >&2
-    echo "Set BATS_MOCK_DEV_CONTAINER or provide IMAGE_NAME." >&2
-    exit 1
-  fi
-}
-
-build_container_image() {
-  local image_name="$1"
-  local container_runtime
-
-  container_runtime="$(container_cli)"
-
-  echo "Building container image '${image_name}'"
-  "${container_runtime}" build -t "${image_name}" -f ./.devcontainer/Containerfile .
-}
-
 run_in_container() {
   local container_runtime
 
   echo "Using dev container: ${BATS_MOCK_DEV_CONTAINER}"
   container_runtime="$(container_cli)"
 
+  # If the image doesn't exist yet, build it first.
   if ! "${container_runtime}" image inspect "${BATS_MOCK_DEV_CONTAINER}" >/dev/null 2>&1; then
     build_container_image "${BATS_MOCK_DEV_CONTAINER}"
   fi
@@ -181,7 +293,7 @@ main() {
 
   # Normal non-container execution
   if [[ "${PREFIX:0:1}" != '/' ]]; then
-    echo "$(basename "$0"): PREFIX must be an absolute path" >&2
+    echo "${SCRIPT_NAME}: PREFIX must be an absolute path" >&2
     exit 1
   fi
 

@@ -31,6 +31,7 @@ jobs:
       - name: 🛎️ Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: 🧮 Read image version
@@ -51,16 +52,23 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📥 Pull development container image
-        run: docker pull "${STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF}"
+        run: |
+          echo "Pulling development container image: ${STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF}"
+          docker pull "${STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF}"
         env:
           STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF: ${{ steps.image-version.outputs.image_ref }}
 
       - name: 🔍 Run formal checks
         run: |
           echo "Running ./build check ..."
+          # Use -e GIT_CONFIG_* to set safe.directory config without modifying host git config,
+          # allowing the build script to run git commands in the mounted volume without safe.directory errors.
           docker run --rm \
             -v "$PWD:/code" \
             -w /code \
+            -e GIT_CONFIG_COUNT=1 \
+            -e GIT_CONFIG_KEY_0=safe.directory \
+            -e GIT_CONFIG_VALUE_0=/code \
             --entrypoint /bin/bash \
             "${STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF}" \
             ./build check

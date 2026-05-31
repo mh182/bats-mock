@@ -68,6 +68,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Read image version
@@ -92,15 +93,20 @@ jobs:
         run: |
           docker build \
             -t "${STEPS_IMAGE_REF_OUTPUTS_IMAGE_REF}" \
+            --build-arg image_version="${STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_VERSION}" \
             -f .devcontainer/Containerfile \
             .
         env:
           STEPS_IMAGE_REF_OUTPUTS_IMAGE_REF: ${{ steps.image-ref.outputs.image_ref }}
+          STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_VERSION: ${{ steps.image-version.outputs.image_version }}
 
       - name: Run build check in container
         run: |
           docker run --rm \
             -v "$PWD:/code" \
+            -e GIT_CONFIG_COUNT=1 \
+            -e GIT_CONFIG_KEY_0=safe.directory \
+            -e GIT_CONFIG_VALUE_0=/code \
             -w /code \
             --entrypoint /bin/bash \
             "${STEPS_IMAGE_REF_OUTPUTS_IMAGE_REF}" \
