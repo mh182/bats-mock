@@ -1,6 +1,7 @@
 # bats-mock
 
 [![Tests](https://github.com/mh182/bats-mock/actions/workflows/tests.yml/badge.svg)](https://github.com/mh182/bats-mock/actions/workflows/tests.yml)
+[![GitHub Actions Security Analysis with zizmor](https://github.com/mh182/bats-mock/actions/workflows/zizmor.yml/badge.svg)](https://github.com/mh182/bats-mock/actions/workflows/zizmor.yml)
 
 A [Bats][bats-core] helper library providing mocking functionality.
 

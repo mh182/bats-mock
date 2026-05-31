@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  pull-requests: write
+  contents: read
   packages: read
 
 jobs:
@@ -22,10 +22,16 @@ jobs:
   lint:
     name: Formal Checks (Linux)
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: write
 
     steps:
       - name: 🛎️ Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: 🧮 Read image version
         id: image-version
@@ -38,14 +44,16 @@ jobs:
           echo "image_ref=ghcr.io/${GITHUB_REPOSITORY,,}-dev:${image_version}" >> "${GITHUB_OUTPUT}"
 
       - name: 🔐 Login to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee   # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📥 Pull development container image
-        run: docker pull "${{ steps.image-version.outputs.image_ref }}"
+        run: docker pull "${STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF}"
+        env:
+          STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF: ${{ steps.image-version.outputs.image_ref }}
 
       - name: 🔍 Run formal checks
         run: |
@@ -54,11 +62,13 @@ jobs:
             -v "$PWD:/code" \
             -w /code \
             --entrypoint /bin/bash \
-            "${{ steps.image-version.outputs.image_ref }}" \
+            "${STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF}" \
             ./build check
+        env:
+          STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF: ${{ steps.image-version.outputs.image_ref }}
 
       - name: Comment broken links in documentation
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0    # v3.0.4
         with:
           path: .lychee-out.md
 
@@ -69,8 +79,10 @@ jobs:
             -v "$PWD:/code" \
             -w /code \
             --entrypoint /bin/bash \
-            "${{ steps.image-version.outputs.image_ref }}" \
+            "${STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF}" \
             -lc 'bats --version && bats test --print-output-on-failure'
+        env:
+          STEPS_IMAGE_VERSION_OUTPUTS_IMAGE_REF: ${{ steps.image-version.outputs.image_ref }}
 
   # -------------------------------------------------------
   # Bats test suite across OS versions
@@ -87,7 +99,9 @@ jobs:
 
     steps:
       - name: 🛎️ Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: 🧰 Install dependencies
         run: |
@@ -109,4 +123,4 @@ jobs:
           github.event_name == 'workflow_dispatch' &&
           github.event.inputs.debug_enabled == 'true' &&
           matrix.os == github.event.inputs.debug_os
-        uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@35b54afac29c97fb54faba5b513f8fbd1882f113   # v3.24
