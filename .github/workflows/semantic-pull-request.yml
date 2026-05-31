@@ -1,0 +1,65 @@
+name: Semantic Pull Request
+
+on:
+  # This workflow is required to be run on pull_request_target as it modifies the PR comments.
+  # Care should be taken that the jobs do not run any untrusted input
+  # zizmor: ignore[dangerous-triggers]
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+permissions:
+  pull-requests: read
+
+jobs:
+  semantic-pr:
+    name: Validate PR title
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Validate semantic PR title
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        id: check_pr_title
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            refactor
+            perf
+            style
+            test
+            docs
+            build
+            chore
+            revert
+          subjectPattern: ^[A-Z].*$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            must start with an uppercase letter.
+
+      - name: Comment guidance on failure
+        if: always() && steps.check_pr_title.outputs.error_message != ''
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        with:
+          header: pr-title-lint-error
+          message: |
+            ❌ Pull request title validation failed.
+
+            Please use the Conventional Commits format:
+            `<type>(optional scope): <description>`
+
+            Allowed types in this repository are:
+            `feat`, `fix`, `refactor`, `perf`, `style`, `test`, `docs`, `build`, `chore`, `revert`
+
+            See the commit message guide in CONTRIBUTING.md:
+            https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md#commit-messages
+
+            Details:
+
+            > ${{ steps.check_pr_title.outputs.error_message }}

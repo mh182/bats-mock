@@ -339,6 +339,7 @@ and always reflects the latest stable state.
 ### Pull Requests
 
 - Every change must be submitted through a pull request
+- Pull request titles must follow the Conventional Commits format
 - Pull requests require:
   - Successful CI checks
   - Review and approval by **at least one maintainer**
@@ -364,6 +365,8 @@ Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) with 
 
 [optional footer(s)]
 ```
+
+The `<description>` must start with an uppercase letter.
 
 The commit `type` can be:
 
