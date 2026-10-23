@@ -60,6 +60,21 @@ load mock_test_suite
   ls -al /usr/bin
 }
 
+@test "path_rm terminates when a command's PATH entry has a trailing slash" {
+  some_tool="$(mock_create sometool)"
+  # Retains the leading / of the directory path
+  some_tool_dir="${some_tool%/*}"
+
+  # Trailing slash in PATH entry
+  # shellcheck disable=SC2016 # expanded by the argument passed to bash -c
+  run timeout 3 env PATH="${some_tool_dir}/:${PATH}" bash -c \
+    'source "$0"; path_rm sometool' \
+    "${BATS_TEST_DIRNAME}/../src/bats-mock.bash"
+
+  [[ "${status}" -eq 0 ]]
+  PATH="${output}" run ! command -v sometool
+}
+
 @test "path_rm doesn't accept relative paths" {
   run path_rm "relative/path" "/a/b:/a/b/relative/path:/c/d"
 

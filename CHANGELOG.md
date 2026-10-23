@@ -4,6 +4,10 @@ All notable changes to [bats-mock](README.md) will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Prevent path_rm looping on trailing-slash PATH entries [#50](https://github.com/mh182/bats-mock/issues/50)
+
 ### 💼 Other
 
 - Bump lychee and rumdl to newest version
@@ -14,6 +18,7 @@ All notable changes to [bats-mock](README.md) will be documented in this file.
 - Make CI pipeline hermetic using container images [#35](https://github.com/mh182/bats-mock/issues/35)
 - Add static analysis checks for Github actions [#46](https://github.com/mh182/bats-mock/issues/46)
 - Enforce conventional commits [#33](https://github.com/mh182/bats-mock/issues/33)
+- Facilitate CHANGELOG.md generation using git-cliff [#34](https://github.com/mh182/bats-mock/issues/34)
 
 ### 🚜 Refactor
 
