@@ -37,8 +37,8 @@ mock_create() {
 
   # Find the next available index. Use sort+tail instead of wc -l to avoid name
   # collisions in case a mock is deleted in the test.
-  index="$(find "${BATS_TEST_TMPDIR}" -maxdepth 1 -type f -name "${prefix}.*" \
-    2>/dev/null | sed -E "s|.*/${prefix}\.([0-9]+)$|\1|" | sort -n | tail -n1)"
+  index="$(command -p find "${BATS_TEST_TMPDIR}" -maxdepth 1 -type f -name "${prefix}.*" \
+    2>/dev/null | command -p sed -E "s|.*/${prefix}\.([0-9]+)$|\1|" | command -p sort -n | command -p tail -n1)"
   if [[ -z "${index}" ]]; then
     index=0
   else
@@ -57,7 +57,7 @@ mock_create() {
   printf '%s' '' >"${mock}.output"
   printf '%s' '' >"${mock}.side_effect"
 
-  cat <<EOF >"${mock}"
+  command -p cat <<EOF >"${mock}"
 #!/usr/bin/env bash
 
 set -e
@@ -68,7 +68,7 @@ IFS= read -r prev_call_num < "\${mock}.call_num" || true
 call_num="\$(( prev_call_num + 1 ))"
 echo "\${call_num}" > "\${mock}.call_num"
 
-echo "\${_USER:-\$(id -un)}" > "\${mock}.user.\${call_num}"
+echo "\${_USER:-\$(command -p id -un)}" > "\${mock}.user.\${call_num}"
 
 printf "%s" "\$*" > "\${mock}.args.\${call_num}"
 
@@ -77,9 +77,9 @@ for var in \$(compgen -e); do
 done > "\${mock}.env.\${call_num}"
 
 if [[ -e "\${mock}.output.\${call_num}" ]]; then
-  cat "\${mock}.output.\${call_num}"
+  command -p cat "\${mock}.output.\${call_num}"
 else
-  cat "\${mock}.output"
+  command -p cat "\${mock}.output"
 fi
 
 if [[ -e "\${mock}.side_effect.\${call_num}" ]]; then
@@ -95,7 +95,7 @@ else
 fi
 exit "\${status_value}"
 EOF
-  chmod +x "${mock}"
+  command -p chmod +x "${mock}"
 
   if [[ -n "${cmd}" ]]; then
     echo "${cmd}"
@@ -129,22 +129,22 @@ mock_set_command() {
       return 1
     fi
     link_name=${cmd}
-    mkdir -p "${link_name%/*}/"
+    command -p mkdir -p "${link_name%/*}/"
   elif [[ -e "${link_name}" ]]; then
     # Link already exists: either created by mock_create or mock_bin_dir
-    if [[ $(readlink "${link_name}") =~ ${BATS_TEST_TMPDIR} ]]; then
+    if [[ $(command -p readlink "${link_name}") =~ ${BATS_TEST_TMPDIR} ]]; then
       # Link pointing to a mock (created by mock_create)
       printf "mock_create: failed to create command '%s': command exists\n" "${cmd}" >&2
       return 1
     else
       # Link pointing to outside $BATS_TEST_TMPDIR (created by mock_bin_dir).
       # We can safely delete it to create a new one.
-      rm "${link_name}"
+      command -p rm "${link_name}"
     fi
   fi
 
   # Create command stub by linking it to the mock
-  ln -s "${mock}" "${link_name}" && echo "${link_name}"
+  command -p ln -s "${mock}" "${link_name}" && echo "${link_name}"
 }
 
 # Sets the exit status of the mock
@@ -194,9 +194,9 @@ mock_set_side_effect() {
 mock_get_call_num() {
   local mock="${1?'Mock must be specified'}"
   # Make sure to resolve links in case we received a mock command
-  mock=$(readlink -f "${mock}")
+  mock=$(command -p readlink -f "${mock}")
 
-  cat "${mock}.call_num"
+  command -p cat "${mock}.call_num"
 }
 
 # Returns the user the mock was called with
@@ -208,12 +208,12 @@ mock_get_call_num() {
 mock_get_call_user() {
   local mock="${1?'Mock must be specified'}"
   # Make sure to resolve links in case we received a mock command
-  mock=$(readlink -f "${mock}")
+  mock=$(command -p readlink -f "${mock}")
 
   local n
   n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
 
-  cat "${mock}.user.${n}"
+  command -p cat "${mock}.user.${n}"
 }
 
 # Returns the arguments line the mock was called with
@@ -225,12 +225,12 @@ mock_get_call_user() {
 mock_get_call_args() {
   local mock="${1?'Mock must be specified'}"
   # Make sure to resolve links in case we received a mock command
-  mock=$(readlink -f "${mock}")
+  mock=$(command -p readlink -f "${mock}")
 
   local n
   n="$(mock_default_n "${mock}" "${2-}")" || return "$?"
 
-  cat "${mock}.args.${n}"
+  command -p cat "${mock}.args.${n}"
 }
 
 # Returns the value of the environment variable the mock was called with
@@ -244,7 +244,7 @@ mock_get_call_env() {
   local mock="${1?'Mock must be specified'}"
   local var="${2?'Variable name must be specified'}"
   # Make sure to resolve links in case we received a mock command
-  mock=$(readlink -f "${mock}")
+  mock=$(command -p readlink -f "${mock}")
 
   local n
   n="$(mock_default_n "${mock}" "${3-}")" || return "$?"
@@ -269,11 +269,11 @@ mock_set_property() {
   local n="${4-}"
 
   if [[ "${property_value}" = '-' ]]; then
-    property_value="$(cat -)"
+    property_value="$(command -p cat -)"
   fi
 
   # Make sure to resolve links in case we received a mock command
-  mock=$(readlink -f "${mock}")
+  mock=$(command -p readlink -f "${mock}")
 
   if [[ -n "${n}" ]]; then
     printf "%b" "${property_value}" >"${mock}.${property_name}.${n}"
@@ -419,9 +419,7 @@ mock_bin_dir() {
       wc which xargs)
   fi
 
-  local c
-  local target
-  local error_msg
+  local c target error_msg
   for c in "${commands[@]}"; do
     if target=$(command -v "$c" 2>&1); then
       # Use 'command -p' to assure ln is found, since '/bin' or '/usr/bin' may be not in $PATH anymore.

@@ -89,3 +89,12 @@ load mock_test_suite
   [[ "${status}" -eq 0 ]]
   [[ "${output}" = 'value 2' ]]
 }
+
+@test 'mock_get_call_env does not call a mocked readlink' {
+  readlink_mock=$(mock_create readlink)
+  "${mock}"
+
+  PATH="${BATS_TEST_TMPDIR}:${PATH}" run -0 mock_get_call_env "${mock}" FOO
+
+  [[ "$(mock_get_call_num "${readlink_mock}")" -eq 0 ]]
+}

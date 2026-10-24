@@ -65,3 +65,23 @@ load mock_test_suite
   [[ "${status}" -eq 0 ]]
   [[ "${output}" = 'alice' ]]
 }
+
+@test 'mock_get_call_user does not call a mocked cat' {
+  cat_mock=$(mock_create cat)
+  # Call the mock at least once
+  "${mock}"
+
+  PATH="${BATS_TEST_TMPDIR}:${PATH}" run -0 mock_get_call_user "${mock}"
+
+  [[ "$(mock_get_call_num "${cat_mock}")" -eq 0 ]]
+}
+
+@test 'mock_get_call_user does not call a mocked readlink' {
+  readlink_mock=$(mock_create readlink)
+  # Call the mock at least once
+  "${mock}"
+
+  PATH="${BATS_TEST_TMPDIR}:${PATH}" run -0 mock_get_call_user "${mock}"
+
+  [[ "$(mock_get_call_num "${readlink_mock}")" -eq 0 ]]
+}

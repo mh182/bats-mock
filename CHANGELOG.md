@@ -7,6 +7,7 @@ All notable changes to [bats-mock](README.md) will be documented in this file.
 ### 🐛 Bug Fixes
 
 - Prevent path_rm looping on trailing-slash PATH entries [#50](https://github.com/mh182/bats-mock/issues/50)
+- Bypass PATH mocks for internal commands [#51](https://github.com/mh182/bats-mock/issues/51)
 
 ### 💼 Other
 
