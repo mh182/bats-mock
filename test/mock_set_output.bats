@@ -66,3 +66,22 @@ load mock_test_suite
   run "${cmd}"
   [[ "${output}" = 'output 1' ]]
 }
+
+@test 'mock_set_property does not call a mocked cat' {
+  # mock_set_output calls mock_set_property which uses 'cat' if the value is read
+  # from STDIN.
+  cat_mock=$(mock_create cat)
+
+  PATH="${BATS_TEST_TMPDIR}:${PATH}" run -0 mock_set_output "${cat_mock}" - <<<'output 1'
+
+  [[ "$(mock_get_call_num "${cat_mock}")" -eq 0 ]]
+}
+
+@test 'mock_set_property does not call a mocked readlink' {
+  # mock_set_output calls mock_set_property which use 'readlink'
+  readlink_mock=$(mock_create readlink)
+
+  PATH="${BATS_TEST_TMPDIR}:${PATH}" run -0 mock_set_output "${readlink_mock}" "output 1"
+
+  [[ "$(mock_get_call_num "${readlink_mock}")" -eq 0 ]]
+}

@@ -30,3 +30,19 @@ load mock_test_suite
   [[ "${status}" -eq 0 ]]
   [[ "${output}" -eq 1 ]]
 }
+
+@test 'mock_get_call_num does not call a mocked cat' {
+  cat_mock=$(mock_create cat)
+
+  PATH="${BATS_TEST_TMPDIR}:${PATH}" run -0 mock_get_call_num "${mock}"
+
+  [[ "$(mock_get_call_num "${cat_mock}")" -eq 0 ]]
+}
+
+@test 'mock_get_call_num does not call a mocked readlink' {
+  readlink_mock=$(mock_create readlink)
+
+  PATH="${BATS_TEST_TMPDIR}:${PATH}" run -0 mock_get_call_num "${mock}"
+
+  [[ "$(mock_get_call_num "${readlink_mock}")" -eq 0 ]]
+}
