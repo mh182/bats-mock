@@ -2,7 +2,7 @@
 
 All notable changes to [bats-mock](README.md) will be documented in this file.
 
-## [unreleased]
+## [0.2.1] - 2026-10-25
 
 ### 🐛 Bug Fixes
 
@@ -84,6 +84,8 @@ All notable changes to [bats-mock](README.md) will be documented in this file.
 
 ## [0.1.0] - 2021-05-04
 
+## [0.1.0] - 2021-05-04
+
 Forked from [grayhemp/bats-mock](https://github.com/grayhemp/bats-mock)
 at commit [48fce74](https://github.com/grayhemp/bats-mock/commit/48fce74482a4d2bb879b904ccab31b6bc98e3224)
 
@@ -93,7 +95,7 @@ at commit [48fce74](https://github.com/grayhemp/bats-mock/commit/48fce74482a4d2b
 - Mock customization `mock_set_status`, `mock_set_output`, `mock_set_side_effect`
 - Mock observation `mock_get_call_num`, `mock_get_call_user`, `mock_get_call_args`, `mock_get_call_env`
 
-[unreleased]: https://github.com/mh182/bats-mock/compare/v0.2.0..HEAD
+[0.2.1]: https://github.com/mh182/bats-mock/compare/v0.2.0..v0.2.1
 [0.2.0]: https://github.com/mh182/bats-mock/compare/v0.1.0..v0.2.0
 [0.1.0]: https://github.com/mh182/bats-mock/tree/v0.1.0
 
