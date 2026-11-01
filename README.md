@@ -2,6 +2,7 @@
 
 ![Github Release](https://img.shields.io/github/v/release/mh182/bats-mock)
 [![Tests](https://github.com/mh182/bats-mock/actions/workflows/tests.yml/badge.svg)](https://github.com/mh182/bats-mock/actions/workflows/tests.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mh182/bats-mock/badge)](https://scorecard.dev/viewer/?uri=github.com/mh182/bats-mock)
 [![GitHub Actions Security Analysis with zizmor](https://github.com/mh182/bats-mock/actions/workflows/zizmor.yml/badge.svg)](https://github.com/mh182/bats-mock/actions/workflows/zizmor.yml)
 
 A [Bats][bats-core] helper library providing mocking functionality.
