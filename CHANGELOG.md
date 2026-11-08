@@ -19,6 +19,7 @@ All notable changes to [bats-mock](README.md) will be documented in this file.
 - Add codespell to detect common misspellings [#59](https://github.com/mh182/bats-mock/issues/59)
 - Add OpenSSF Scorecard workflow and badge [#42](https://github.com/mh182/bats-mock/issues/42)
 - Enforce REUSE license compliance [#64](https://github.com/mh182/bats-mock/issues/64)
+- Add kcov coverage reporting [#8](https://github.com/mh182/bats-mock/issues/8)
 
 ### 📚 Documentation
 
