@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 Max Hofer <mh182@chello.at>
+
+SPDX-License-Identifier: Unlicense
+-->
+
 # Security
 
 If you find a significant vulnerability, or evidence of one, please report it privately.

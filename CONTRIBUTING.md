@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
+
+SPDX-License-Identifier: Unlicense
+-->
+
 <!-- omit in toc -->
 
 # Contributing to [bats-mock](README.md)

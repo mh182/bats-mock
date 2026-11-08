@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Max Hofer <mh182@chello.at>
+#
+# SPDX-License-Identifier: Unlicense
+
 FROM bats/bats:latest
 
 # The bats helper libraries are installed in /usr/lib/bats.
