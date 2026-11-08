@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Max Hofer <mh182@chello.at>
+#
+# SPDX-License-Identifier: Unlicense
+
 # git-cliff ~ configuration file
 # https://git-cliff.org/docs/configuration
 
@@ -7,8 +11,15 @@ repo = "bats-mock"
 
 [changelog]
 # A Tera template to be rendered for each release in the changelog.
-# See https://keats.github.io/tera/docs/#introduction
+# See https://keats.github.io/tera/#getting-started
 header = """
+<!--
+SPDX-FileCopyrightText: 2018 Sergey Konoplev <gray.ru@gmail.com>
+SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
+
+SPDX-License-Identifier: Unlicense
+-->
+
 # Changelog\n
 All notable changes to [{{ remote.github.repo }}](README.md) will be documented in this file.
 """

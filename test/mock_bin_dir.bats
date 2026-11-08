@@ -1,5 +1,9 @@
 #!/usr/bin/env bats
 
+# SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
+#
+# SPDX-License-Identifier: Unlicense
+
 load '../load'
 
 # We use flags on 'run' command which are available since bats version 1.5.0

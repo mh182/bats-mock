@@ -1,5 +1,10 @@
 #!/usr/bin/env bats
 
+# SPDX-FileCopyrightText: 2018 Sergey Konoplev <gray.ru@gmail.com>
+# SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
+#
+# SPDX-License-Identifier: Unlicense
+
 load mock_test_suite
 
 @test 'mock_get_call_env requires mock to be specified' {

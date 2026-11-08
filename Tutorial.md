@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
+
+SPDX-License-Identifier: Unlicense
+-->
+
 # Using `bats-mock` for Test-Driven Development in Bash
 
 In this tutorial, we’ll explore how to use [`bats-mock`](README.md)

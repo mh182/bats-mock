@@ -1,5 +1,9 @@
 #!/usr/bin/env bats
 
+# SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
+#
+# SPDX-License-Identifier: Unlicense
+
 # Test setup to verify bats-mock is available via bats_load_library
 
 bats_require_minimum_version 1.5.0

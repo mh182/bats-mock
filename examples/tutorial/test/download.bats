@@ -1,5 +1,9 @@
 #!/usr/bin/env bats
 
+# SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
+#
+# SPDX-License-Identifier: Unlicense
+
 # We use 'run' with flags, otherwise Bats will complain with a warning.
 bats_require_minimum_version 1.5.0
 

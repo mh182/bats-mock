@@ -1,3 +1,10 @@
+<!--
+SPDX-FileCopyrightText: 2018 Sergey Konoplev <gray.ru@gmail.com>
+SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
+
+SPDX-License-Identifier: Unlicense
+-->
+
 # Changelog
 
 All notable changes to [bats-mock](README.md) will be documented in this file.
@@ -10,6 +17,11 @@ All notable changes to [bats-mock](README.md) will be documented in this file.
 - Avoid devcontainer image races with conditional validation [#60](https://github.com/mh182/bats-mock/issues/60)
 - Add codespell to detect common misspellings [#59](https://github.com/mh182/bats-mock/issues/59)
 - Add OpenSSF Scorecard workflow and badge [#42](https://github.com/mh182/bats-mock/issues/42)
+- Enforce REUSE license compliance [#64](https://github.com/mh182/bats-mock/issues/64)
+
+### 📚 Documentation
+
+- Add SPDX license metadata for REUSE compliance [#64](https://github.com/mh182/bats-mock/issues/64)
 
 ## [0.2.1] - 2026-10-25
 

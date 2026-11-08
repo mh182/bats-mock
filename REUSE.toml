@@ -1,0 +1,12 @@
+version = 1
+
+[[annotations]]
+path = [
+  "AUTHORS",
+  "MAINTAINERS",
+  ".devcontainer/image-version",
+  ".devcontainer/vscode/devcontainer.json",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Max Hofer <mh182@chello.at>"
+SPDX-License-Identifier = "Unlicense"
