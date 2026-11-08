@@ -1,0 +1,69 @@
+# SPDX-FileCopyrightText: 2026 Max Hofer <mh182@chello.at>
+#
+# SPDX-License-Identifier: MIT
+
+name: Code coverage
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "src/**"
+      - "test/**"
+      - ".github/workflows/code-cvoerage.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "test/**"
+      - ".github/workflows/code-cvoerage.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: 📊 Code coverage
+    # The kcov Docker image lacks Bats, which must run inside the coverage environment.
+    # The precompiled kcov binary used here only works on Ubuntu 22.04.
+    # Installing kcov in the Alpine devcontainer reported only 49% coverage
+    # instead of over 90%, suggesting an issue with musl compatibility.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧰 Install Bats
+        run: sudo env PREFIX=/usr ./script/install_bats
+
+      - name: 🧰 Install kcov
+        run: |
+          wget https://github.com/SimonKagstrom/kcov/releases/download/v42/kcov-amd64.tar.gz
+          tar -xf kcov-amd64.tar.gz
+
+      - name: 🧪 Run Bats tests with code coverage (kcov)
+        run: |
+          ./usr/local/bin/kcov --exclude-path=/tmp --exclude-path=/usr $PWD/coverage bats test/
+        shell: 'script -q -e -c "bash {0}"' # work around tty issues
+        env:
+          TERM: linux # fix tput for tty issue work around
+
+      - name: 📦 Archive code coverage results
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: code-coverage-report
+          path: coverage/*
+
+      - name: 📈 Print the total coverage
+        id: coverage-percent
+        shell: bash
+        env:
+          minimum_coverage: 90
+        run: |
+          value=$(jq -er '.percent_covered | tonumber | floor' <coverage/bats/coverage.json)
+          echo "Coverage: $value%" | tee "$GITHUB_STEP_SUMMARY"
+          if (( value < minimum_coverage )); then
+            echo "  is below required minimum coverage ($minimum_coverage%)." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
