@@ -23,8 +23,8 @@ usage() {
   echo "Usage: ${SCRIPT_NAME} <command> [options]" >&2
   echo "" >&2
   echo "Available commands:" >&2
-  echo "  check      Run style and static analysis checks" >&2
-  echo "    --style-only     Skip ShellCheck and changelog freshness checks" >&2
+  echo "  check      Run style, static analysis, and license compliance checks" >&2
+  echo "    --style-only     Skip ShellCheck, REUSE, and changelog freshness checks" >&2
   echo "    --analysis-only  Skip shfmt and rumdl checks" >&2
   echo "    --skip-link      Skip Lychee documentation link checks" >&2
   echo "  changelog  Regenerate CHANGELOG.md with git-cliff" >&2
@@ -67,6 +67,7 @@ command_check() {
 
   if "${do_static_analysis}"; then
     run_check_tool shellcheck src/*.bash test/*.bats || status=$?
+    run_check_tool reuse lint || status=$?
   fi
 
   if "${skip_link_check}"; then

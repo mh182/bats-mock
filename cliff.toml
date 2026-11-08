@@ -86,8 +86,8 @@ require_conventional = false
 split_commits = false
 # An array of regex based parsers to modify commit messages prior to further processing.
 commit_preprocessors = [
-  # Step 1: Capture the commit subject + the first Closes: #ID footer and append a placeholder [#ID]
-  { pattern = "(?s)^([^\n]+).*?Closes: #([0-9]+).*", replace = "$1 [#$2]" },
+    # Step 1: Capture the commit subject + the first Closes: #ID or Refs: #ID footer and append a placeholder [#ID]
+    { pattern = "(?s)^([^\n]+).*?(?:Closes|Refs): #([0-9]+).*", replace = "$1 [#$2]" },
 
   # Step 2: Replace the placeholder [#ID] with the full GitHub link
   { pattern = "\\[#([0-9]+)\\]", replace = "[#$1](<REPO>/issues/$1)" },
