@@ -1,7 +1,7 @@
 <!--
 SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
 
-SPDX-License-Identifier: Unlicense
+SPDX-License-Identifier: MIT
 -->
 
 # Code of Conduct - [bats-mock](README.md)

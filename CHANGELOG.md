@@ -2,6 +2,7 @@
 SPDX-FileCopyrightText: 2018 Sergey Konoplev <gray.ru@gmail.com>
 SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
 
+SPDX-License-Identifier: MIT
 SPDX-License-Identifier: Unlicense
 -->
 
@@ -22,6 +23,10 @@ All notable changes to [bats-mock](README.md) will be documented in this file.
 ### 📚 Documentation
 
 - Add SPDX license metadata for REUSE compliance [#64](https://github.com/mh182/bats-mock/issues/64)
+
+### ⚙️  Miscellaneous Tasks
+
+- *(license)* Adopt the MIT License [#66](https://github.com/mh182/bats-mock/issues/66)
 
 ## [0.2.1] - 2026-10-25
 

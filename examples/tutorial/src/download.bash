@@ -2,7 +2,7 @@
 
 # SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
 #
-# SPDX-License-Identifier: Unlicense
+# SPDX-License-Identifier: MIT
 
 #
 # download.bash — download a file from a URL and store it at a target location.

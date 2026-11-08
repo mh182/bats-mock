@@ -1,7 +1,7 @@
 <!--
 SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
 
-SPDX-License-Identifier: Unlicense
+SPDX-License-Identifier: MIT
 -->
 
 <!-- omit in toc -->
@@ -215,8 +215,21 @@ Your development environment should provide the following tooling:
 - [codespell](https://github.com/codespell-project/codespell) to check spelling
 - [lychee](https://github.com/lycheeverse/lychee) to check links in documentation
 - [rumdl](https://github.com/rvben/rumdl) to format/check Markdown documentation
+- [reuse](https://codeberg.org/fsfe/reuse-tool) to validate copyright and licensing information
 - [ShellCheck][shellcheck] for static code analysis
 - [shfmt][shfmt] to format/check the style guide
+
+Every file you contribute must have copyright and licensing information, as
+described in the [REUSE tutorial](https://reuse.software/tutorial/).
+For files that cannot contain comments, use a `.license` sidecar or `REUSE.toml`.
+The copyright year should be the year the file was first published.
+For example, a Bash starts with:
+
+```bash
+# SPDX-FileCopyrightText: 2018 Your Name <you@example.com>
+#
+# SPDX-License-Identifier: MIT
+```
 
 The recommended way to set up a consistent development environment is
 to use a container image.

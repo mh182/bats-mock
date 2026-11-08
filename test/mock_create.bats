@@ -4,6 +4,7 @@
 # SPDX-FileCopyrightText: 2020 Unknown <ms-develop@stoffnet.at>
 # SPDX-FileCopyrightText: 2025 Max Hofer <mh182@chello.at>
 #
+# SPDX-License-Identifier: MIT
 # SPDX-License-Identifier: Unlicense
 
 # Load bats-mock library
